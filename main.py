@@ -134,13 +134,13 @@ try:
         ''')
 
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS course_learning_objective (
-              course_learning_objectives_ID VARCHAR(255) PRIMARY KEY,
-              course_number VARCHAR(255),
-              code INT,
-              FOREIGN KEY (course_number) REFERENCES courses (course_number),
-              FOREIGN KEY (code) REFERENCES learning_objectives (code)
-            )
+          CREATE TABLE IF NOT EXISTS course_learning_objective (
+            course_number VARCHAR(255),
+            objective_code INT,
+            PRIMARY KEY (course_number, objective_code),
+            FOREIGN KEY (course_number) REFERENCES courses (course_number),
+            FOREIGN KEY (objective_code) REFERENCES learning_objectives (code)
+            );
         ''')
 
         # Commit changes
