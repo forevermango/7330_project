@@ -39,12 +39,12 @@ try:
         cursor = conn.cursor()
 
         # Execute SQL commands to create tables
-        cursor.execute('''
+        cursor.execute(''' 
             CREATE TABLE IF NOT EXISTS degree (
-              name_level VARCHAR(255) PRIMARY KEY,
-              name VARCHAR(255),
-              level VARCHAR(255),
-              UNIQUE (name_level)
+                name VARCHAR(255),
+                level VARCHAR(255),
+                name_level VARCHAR(255) AS (CONCAT(name, ' ', level)) STORED PRIMARY KEY,
+                UNIQUE (name_level)
             )
         ''')
 
@@ -57,9 +57,9 @@ try:
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS semester (
-              semester_year VARCHAR(255) PRIMARY KEY,
-              year INT,
-              semester VARCHAR(255)
+                semester_year VARCHAR(255) AS (CONCAT(year, ' ', semester)) STORED PRIMARY KEY,
+                year INT,
+                semester VARCHAR(255)
             )
         ''')
 
