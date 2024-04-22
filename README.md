@@ -14,4 +14,4 @@ Then visit [http://localhost:8000/docs](http://localhost:8000/docs) to view the 
 
 
 ## To Do
-- Make table names uniformly singlular, not plural (ie courses v section)
+- Make table names uniformly plural (ie courses v section)
