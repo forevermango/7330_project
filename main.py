@@ -40,7 +40,7 @@ try:
 
         # Execute SQL commands to create tables
         cursor.execute(''' 
-            CREATE TABLE IF NOT EXISTS degree (
+            CREATE TABLE IF NOT EXISTS degrees (
                 name VARCHAR(255),
                 level VARCHAR(255),
                 name_level VARCHAR(255) AS (CONCAT(name, ' ', level)) STORED PRIMARY KEY,
@@ -56,7 +56,7 @@ try:
         ''')
 
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS semester (
+            CREATE TABLE IF NOT EXISTS semesters (
                 semester_year VARCHAR(255) AS (CONCAT(year, ' ', semester)) STORED PRIMARY KEY,
                 year INT,
                 semester VARCHAR(255)
@@ -65,12 +65,12 @@ try:
 
         # Insert semesters for Fall and Spring 2024
         cursor.execute('''
-            INSERT INTO semester (year, semester) VALUES (2024, 'Fall'), (2024, 'Spring')
+            INSERT INTO semesters (year, semester) VALUES (2024, 'Fall'), (2024, 'Spring')
             ON DUPLICATE KEY UPDATE year=VALUES(year), semester=VALUES(semester)
         ''')
 
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS instructor (
+            CREATE TABLE IF NOT EXISTS instructors (
               instructor_id INT PRIMARY KEY,
               name VARCHAR(255)
             )
@@ -83,9 +83,9 @@ try:
               instructor_id INT,
               course_number VARCHAR(255),
               semester_year VARCHAR(255),
-              FOREIGN KEY (instructor_id) REFERENCES instructor (instructor_id),
+              FOREIGN KEY (instructor_id) REFERENCES instructors (instructor_id),
               FOREIGN KEY (course_number) REFERENCES courses (course_number),
-              FOREIGN KEY (semester_year) REFERENCES semester (semester_year)
+              FOREIGN KEY (semester_year) REFERENCES semesters (semester_year)
             )
         ''')
 
@@ -99,8 +99,8 @@ try:
               course_section VARCHAR(255),
               PRIMARY KEY (course_section),
               FOREIGN KEY (course_number) REFERENCES courses (course_number),
-              FOREIGN KEY (instructor_id) REFERENCES instructor (instructor_id),
-              FOREIGN KEY (semester_year) REFERENCES semester (semester_year)
+              FOREIGN KEY (instructor_id) REFERENCES instructors (instructor_id),
+              FOREIGN KEY (semester_year) REFERENCES semesters (semester_year)
             )
         ''')
 
@@ -110,7 +110,7 @@ try:
               degree_ID VARCHAR(255),
               course_number VARCHAR(255),
               core_course BOOLEAN,
-              FOREIGN KEY (degree_ID) REFERENCES degree (name_level),
+              FOREIGN KEY (degree_ID) REFERENCES degrees (name_level),
               FOREIGN KEY (course_number) REFERENCES courses (course_number)
             )
         ''')
@@ -124,7 +124,7 @@ try:
         ''')
 
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS course_evaluation (
+            CREATE TABLE IF NOT EXISTS course_evaluations (
               eval_ID INT PRIMARY KEY,
               section_ID INT,
               objective_code INT,
@@ -140,7 +140,7 @@ try:
         ''')
 
         cursor.execute('''
-          CREATE TABLE IF NOT EXISTS course_learning_objective (
+          CREATE TABLE IF NOT EXISTS course_learning_objectives(
             course_number VARCHAR(255),
             objective_code INT,
             PRIMARY KEY (course_number, objective_code),

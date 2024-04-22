@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import mysql.connector
 import os
+from typing import List
 
 app = FastAPI()
 
@@ -60,7 +61,7 @@ class CourseSectionAssociation(BaseModel):
 
 @app.post("/add-degree/", status_code=201, summary="Add a new degree", response_description="Degree added successfully")
 async def add_degree(degree: Degree):
-    return await add_entity(degree, "degree", ("name", "level"))
+    return await add_entity(degree, "degrees", ("name", "level"))
 
 @app.post("/add-course/", status_code=201, summary="Add a new course", response_description="Course added successfully")
 async def add_course(course: Course):
@@ -68,7 +69,7 @@ async def add_course(course: Course):
 
 @app.post("/add-instructor/", status_code=201, summary="Add a new instructor", response_description="Instructor added successfully")
 async def add_instructor(instructor: Instructor):
-    return await add_entity(instructor, "instructor", ("instructor_id", "name"))
+    return await add_entity(instructor, "instructors", ("instructor_id", "name"))
 
 @app.post("/add-section/", status_code=201, summary="Add a new section", response_description="Section added successfully")
 async def add_section(section: Section):
@@ -80,7 +81,7 @@ async def add_learning_objective(learning_objective: LearningObjective):
 
 @app.post("/associate-course-objective/", status_code=201, summary="Associate a course with a learning objective", response_description="Association created successfully")
 async def associate_course_objective(association: CourseObjectiveAssociation):
-    return await add_entity(association, "course_learning_objective", ("course_number", "objective_code"))
+    return await add_entity(association, "course_learning_objectives", ("course_number", "objective_code"))
 
 @app.post("/associate-course-section/", status_code=201, summary="Associate a course with a section for a specific semester", response_description="Association created successfully")
 async def associate_course_section(association: CourseSectionAssociation):
@@ -106,15 +107,46 @@ async def add_entity(entity, table, columns):
     finally:
         conn.close()
 
-def get_db_connection():
-    try:
-        return mysql.connector.connect(
-            host='localhost',
-            user=db_user,
-            passwd=db_password,
-            database=db
-        )
-    except mysql.connector.Error as e:
-        print(f"Database connection failed: {e}")
-        return None
+# Define the Pydantic models for responses and request bodies
+class AvailableOptions(BaseModel):
+    degrees: List[tuple]
+    semesters: List[str]
+    instructors: List[tuple]
 
+class SectionDetails(BaseModel):
+    section_number: int
+    course_name: str
+    course_number: str
+    number_of_students: int
+
+class EvaluationData(BaseModel):
+    section_id: int
+    eval_criteria: str
+    eval_a_count: int
+    eval_b_count: int
+    eval_c_count: int
+    eval_f_count: int
+    improvements: str
+
+@app.post("/update-evaluation/", status_code=201, summary="Update evaluation data", response_description="Evaluation updated successfully")
+async def update_evaluation(eval_data: EvaluationData):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Check if evaluation exists
+    cursor.execute("SELECT * FROM course_evaluations WHERE section_ID = %s", (eval_data.section_id,))
+    existing_data = cursor.fetchone()
+    if existing_data:
+        # Update existing evaluation
+        cursor.execute("""
+            UPDATE course_evaluation SET eval_criteria = %s, eval_A_count = %s, eval_B_count = %s, eval_C_count = %s, eval_F_count = %s, improvements = %s
+            WHERE section_ID = %s
+            """, (eval_data.eval_criteria, eval_data.eval_a_count, eval_data.eval_b_count, eval_data.eval_c_count, eval_data.eval_f_count, eval_data.improvements, eval_data.section_id))
+    else:
+        # Insert new evaluation
+        cursor.execute("""
+            INSERT INTO course_evaluations (section_ID, eval_criteria, eval_A_count, eval_B_count, eval_C_count, eval_F_count, improvements)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (eval_data.section_id, eval_data.eval_criteria, eval_data.eval_a_count, eval_data.eval_b_count, eval_data.eval_c_count, eval_data.eval_f_count, eval_data.improvements))
+    conn.commit()
+    conn.close()
+    return {"status": "Evaluation updated successfully"}
