@@ -3,7 +3,7 @@
 
 1. Install MySQL
 2. Open the MySQL command line and run ```CREATE DATABASE project;```
-3. Update the user credentials in main.py
+3. Update the user credentials in config.txt
 4. Run main.py with ```python main.py``` to create the tables
 
 ## Start the Fast API Server
