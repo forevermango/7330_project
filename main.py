@@ -7,7 +7,7 @@ try:
     conn = mysql.connector.connect(
         host='localhost',          # Host, usually localhost for local server
         user='root',               # Adjust this to your MySQL username
-        passwd='<YOUR_PASSWORD>',        # Your MySQL password
+        passwd='Annette1!',        # Your MySQL password
         database='project'         # Your database name
     )
 
@@ -17,10 +17,9 @@ try:
         # Execute SQL commands to create tables
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS degree (
-              degree_name_level VARCHAR(255) PRIMARY KEY,
+              name_level VARCHAR(255) PRIMARY KEY,
               name VARCHAR(255),
               level VARCHAR(255),
-              name_level VARCHAR(255),
               UNIQUE (name_level)
             )
         ''')
@@ -81,7 +80,7 @@ try:
               degree_ID VARCHAR(255),
               course_number VARCHAR(255),
               core_course BOOLEAN,
-              FOREIGN KEY (degree_ID) REFERENCES degree (degree_name_level),
+              FOREIGN KEY (degree_ID) REFERENCES degree (name_level),
               FOREIGN KEY (course_number) REFERENCES courses (course_number)
             )
         ''')

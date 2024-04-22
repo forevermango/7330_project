@@ -10,4 +10,4 @@
 Start the server with:
 ```uvicorn server:app --reload```
 
-
+Then visit [http://localhost:8000/docs](http://localhost:8000/docs) to view the API documentation.
