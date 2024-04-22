@@ -35,7 +35,7 @@ def get_db_connection():
         return mysql.connector.connect(
             host='localhost',
             user='root',
-            passwd='Annette1!',  # Make sure the password is correct here
+            passwd='<YOUR_PASSWORD>',  # Make sure the password is correct here
             database='project'
         )
     except mysql.connector.Error as e:
