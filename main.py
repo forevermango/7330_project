@@ -1,14 +1,38 @@
 
 import mysql.connector
 from mysql.connector import Error
+import os
+
+def load_config(file_path):
+    """Load configuration from a text file into environment variables."""
+    try:
+        with open(file_path, 'r') as file:
+            for line in file:
+                # Strip whitespace and ignore lines that are empty or start with a comment
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
+    except FileNotFoundError:
+        print("Configuration file not found.")
+    except Exception as e:
+        print(f"An error occurred while reading the configuration file: {e}")
+
+# Usage
+load_config('config.txt')
+
+# Now you can access the variables as environment variables
+db_user = os.getenv('DB_USER')
+db_password = os.getenv('DB_PASSWORD')
+db = os.getenv('DATABASE')
 
 try:
     # Connect to the MySQL database
     conn = mysql.connector.connect(
         host='localhost',          # Host, usually localhost for local server
-        user='root',               # Adjust this to your MySQL username
-        passwd='<YOUR_PASSWORD>',        # Your MySQL password
-        database='project'         # Your database name
+        user=db_user,               # Adjust this to your MySQL username
+        passwd=db_password,        # Your MySQL password
+        database=db         # Your database name
     )
 
     if conn.is_connected():
