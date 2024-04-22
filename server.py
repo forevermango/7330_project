@@ -42,7 +42,7 @@ class Section(BaseModel):
     number_of_students: int
     instructor_id: int
     course_number: str
-    semester_id: str
+    semester_year: str
 
 class LearningObjective(BaseModel):
     code: int
@@ -56,7 +56,7 @@ class CourseObjectiveAssociation(BaseModel):
 class CourseSectionAssociation(BaseModel):
     course_number: str
     section_number: int
-    semester_id: str
+    semester_year: str
 
 @app.post("/add-degree/", status_code=201, summary="Add a new degree", response_description="Degree added successfully")
 async def add_degree(degree: Degree):
@@ -72,7 +72,7 @@ async def add_instructor(instructor: Instructor):
 
 @app.post("/add-section/", status_code=201, summary="Add a new section", response_description="Section added successfully")
 async def add_section(section: Section):
-    return await add_entity(section, "sections", ("section_number", "number_of_students", "instructor_id", "course_number", "semester_id"))
+    return await add_entity(section, "sections", ("section_number", "number_of_students", "instructor_id", "course_number", "semester_year"))
 
 @app.post("/add-learning-objective/", status_code=201, summary="Add a new learning objective", response_description="Learning objective added successfully")
 async def add_learning_objective(learning_objective: LearningObjective):
@@ -84,7 +84,7 @@ async def associate_course_objective(association: CourseObjectiveAssociation):
 
 @app.post("/associate-course-section/", status_code=201, summary="Associate a course with a section for a specific semester", response_description="Association created successfully")
 async def associate_course_section(association: CourseSectionAssociation):
-    return await add_entity(association, "sections_courses", ("course_number", "section_number", "semester_id"))
+    return await add_entity(association, "sections_courses", ("course_number", "section_number", "semester_year"))
 
 async def add_entity(entity, table, columns):
     conn = get_db_connection()

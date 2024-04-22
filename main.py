@@ -63,6 +63,12 @@ try:
             )
         ''')
 
+        # Insert semesters for Fall and Spring 2024
+        cursor.execute('''
+            INSERT INTO semester (year, semester) VALUES (2024, 'Fall'), (2024, 'Spring')
+            ON DUPLICATE KEY UPDATE year=VALUES(year), semester=VALUES(semester)
+        ''')
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS instructor (
               instructor_id INT PRIMARY KEY,
@@ -76,10 +82,10 @@ try:
               number_of_students INT,
               instructor_id INT,
               course_number VARCHAR(255),
-              semester_ID VARCHAR(255),
+              semester_year VARCHAR(255),
               FOREIGN KEY (instructor_id) REFERENCES instructor (instructor_id),
               FOREIGN KEY (course_number) REFERENCES courses (course_number),
-              FOREIGN KEY (semester_ID) REFERENCES semester (semester_year)
+              FOREIGN KEY (semester_year) REFERENCES semester (semester_year)
             )
         ''')
 
@@ -89,12 +95,12 @@ try:
               section_number INT,
               number_of_students INT,
               instructor_id INT,
-              semester_ID VARCHAR(255),
+              semester_year VARCHAR(255),
               course_section VARCHAR(255),
               PRIMARY KEY (course_section),
               FOREIGN KEY (course_number) REFERENCES courses (course_number),
               FOREIGN KEY (instructor_id) REFERENCES instructor (instructor_id),
-              FOREIGN KEY (semester_ID) REFERENCES semester (semester_year)
+              FOREIGN KEY (semester_year) REFERENCES semester (semester_year)
             )
         ''')
 
