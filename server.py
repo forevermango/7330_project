@@ -4,6 +4,9 @@ from pydantic import BaseModel
 import mysql.connector
 import os
 from typing import List
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 app = FastAPI()
 
@@ -161,32 +164,6 @@ async def update_evaluation(eval_data: EvaluationData):
     conn.close()
     return {"status": "Evaluation updated successfully"}
 
-
-@app.get("/available-options/", response_model=AvailableOptions)
-async def available_options():
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cursor:
-            # Fetch Degrees
-            cursor.execute("SELECT DISTINCT name, level FROM degrees")
-            degrees = cursor.fetchall()
-
-            # Fetch Semesters
-            cursor.execute("SELECT DISTINCT semester_year FROM semesters")
-            semesters = cursor.fetchall()
-
-            # Fetch Instructors
-            cursor.execute("SELECT instructor_id, name FROM instructors")
-            instructors = cursor.fetchall()
-
-            return {
-                "degrees": [{"name": name, "level": level} for name, level in degrees],
-                "semesters": [semester_year for (semester_year,) in semesters],
-                "instructors": [{"id": instructor_id, "name": name} for instructor_id, name in instructors]
-            }
-    finally:
-        conn.close()
-
 class DegreeOption(BaseModel):
     name: str
     level: str
@@ -200,18 +177,53 @@ class InstructorOption(BaseModel):
 
 class AvailableOptions(BaseModel):
     degrees: List[DegreeOption]
-    semesters: List[SemesterOption]
+    semesters: List[str]
     instructors: List[InstructorOption]
 
 def get_db_connection():
     try:
-        return mysql.connector.connect(
+        connection = mysql.connector.connect(
             host='localhost',
             user=db_user,
             password=db_password,
             database=db
         )
+        logging.info("Database connection successful")
+        return connection
     except mysql.connector.Error as e:
-        print(f"Database connection failed: {e}")
+        logging.error(f"Database connection failed: {e}")
         return None
 
+@app.get("/available-options/", response_model=AvailableOptions)
+async def available_options():
+    conn = get_db_connection()
+    if not conn:
+        logging.error("Failed to connect to the database.")
+        raise HTTPException(status_code=500, detail="Database connection failed")
+    try:
+        cursor = conn.cursor()
+        logging.debug("Fetching degrees from database.")
+        cursor.execute("SELECT name, level FROM degrees")
+        degree_rows = cursor.fetchall()
+        degrees = [DegreeOption(name=name, level=level) for name, level in degree_rows]
+        logging.debug(f"Degrees fetched: {degrees}")
+
+        logging.debug("Fetching semesters from database.")
+        cursor.execute("SELECT DISTINCT semester_year FROM semesters")
+        semester_rows = cursor.fetchall()
+        semesters = [row[0] for row in semester_rows]
+        logging.debug(f"Semesters fetched: {semesters}")
+
+        logging.debug("Fetching instructors from database.")
+        cursor.execute("SELECT instructor_id, name FROM instructors")
+        instructor_rows = cursor.fetchall()
+        instructors = [InstructorOption(id=id, name=name) for id, name in instructor_rows]
+        logging.debug(f"Instructors fetched: {instructors}")
+
+        return AvailableOptions(degrees=degrees, semesters=semesters, instructors=instructors)
+    except Exception as e:
+        logging.error(f"Error processing available options: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
