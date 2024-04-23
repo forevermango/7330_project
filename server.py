@@ -1,10 +1,20 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import mysql.connector
 import os
 from typing import List
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
 
 def load_config(file_path):
     """Load configuration from a text file into environment variables."""
@@ -150,3 +160,58 @@ async def update_evaluation(eval_data: EvaluationData):
     conn.commit()
     conn.close()
     return {"status": "Evaluation updated successfully"}
+
+
+@app.get("/available-options/", response_model=AvailableOptions)
+async def available_options():
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Fetch Degrees
+            cursor.execute("SELECT DISTINCT name, level FROM degrees")
+            degrees = cursor.fetchall()
+
+            # Fetch Semesters
+            cursor.execute("SELECT DISTINCT semester_year FROM semesters")
+            semesters = cursor.fetchall()
+
+            # Fetch Instructors
+            cursor.execute("SELECT instructor_id, name FROM instructors")
+            instructors = cursor.fetchall()
+
+            return {
+                "degrees": [{"name": name, "level": level} for name, level in degrees],
+                "semesters": [semester_year for (semester_year,) in semesters],
+                "instructors": [{"id": instructor_id, "name": name} for instructor_id, name in instructors]
+            }
+    finally:
+        conn.close()
+
+class DegreeOption(BaseModel):
+    name: str
+    level: str
+
+class SemesterOption(BaseModel):
+    semester_year: str
+
+class InstructorOption(BaseModel):
+    id: int
+    name: str
+
+class AvailableOptions(BaseModel):
+    degrees: List[DegreeOption]
+    semesters: List[SemesterOption]
+    instructors: List[InstructorOption]
+
+def get_db_connection():
+    try:
+        return mysql.connector.connect(
+            host='localhost',
+            user=db_user,
+            password=db_password,
+            database=db
+        )
+    except mysql.connector.Error as e:
+        print(f"Database connection failed: {e}")
+        return None
+

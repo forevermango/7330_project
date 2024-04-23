@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Program Evaluation System</title>
+</head>
+<body>
+    <h1>University Program Evaluation System</h1>
+    <div>
+        <h2>Add New Entries</h2>
+        <form id="newEntryForm">
+            <input type="text" id="degreeName" placeholder="Degree Name">
+            <input type="text" id="degreeLevel" placeholder="Degree Level">
+            <button type="button" onclick="addDegree()">Add Degree</button>
+        </form>
+    </div>
+    <div>
+        <h2>Query Options</h2>
+        <button onclick="fetchAvailableOptions()">Load Available Options</button>
+        <div id="optionsDisplay"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
