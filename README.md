@@ -12,3 +12,6 @@ Start the server with:
 
 Then visit [http://localhost:8000/docs](http://localhost:8000/docs) to view the API documentation.
 
+## Interact with the Database
+
+Open the html file in the frontend directory.
