@@ -4,15 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>University Program Evaluation System</title>
+    <script src="script.js" defer></script>
 </head>
 <body>
     <h1>University Program Evaluation System</h1>
+
+    <!-- Degree Information Entry -->
     <div>
-        <h2>Add New Entries</h2>
-        <form id="newEntryForm">
-            <input type="text" id="degreeName" placeholder="Degree Name">
-            <input type="text" id="degreeLevel" placeholder="Degree Level">
+        <h2>Add New Degree</h2>
+        <form id="newDegreeForm">
+            <input type="text" id="degreeName" placeholder="Degree Name" required>
+            <input type="text" id="degreeLevel" placeholder="Degree Level" required>
             <button type="button" onclick="addDegree()">Add Degree</button>
+        </form>
+    </div>
+
+    <!-- Course Information Entry -->
+    <div>
+        <h2>Add New Course</h2>
+        <form id="newCourseForm">
+            <input type="text" id="courseNumber" placeholder="Course Number" required>
+            <input type="text" id="courseName" placeholder="Course Name" required>
+            <button type="button" onclick="addCourse()">Add Course</button>
+        </form>
+    </div>
+
+    <!-- Instructor Information Entry -->
+    <div>
+        <h2>Add New Instructor</h2>
+        <form id="newInstructorForm">
+            <input type="number" id="instructorId" placeholder="Instructor ID" required>
+            <input type="text" id="instructorName" placeholder="Instructor Name" required>
+            <button type="button" onclick="addInstructor()">Add Instructor</button>
+        </form>
+    </div>
+
+    <!-- Section Information Entry -->
+    <div>
+        <h2>Add New Section</h2>
+        <form id="newSectionForm">
+            <input type="number" id="sectionNumber" placeholder="Section Number" required>
+            <input type="number" id="numberOfStudents" placeholder="Number of Students" required>
+            <input type="number" id="sectionInstructorId" placeholder="Instructor ID" required>
+            <input type="text" id="sectionCourseNumber" placeholder="Course Number" required>
+            <input type="text" id="sectionSemesterYear" placeholder="Semester Year" required>
+            <button type="button" onclick="addSection()">Add Section</button>
+        </form>
+    </div>
+
+    <!-- Learning Objective Entry -->
+    <div>
+        <h2>Add New Learning Objective</h2>
+        <form id="newLearningObjectiveForm">
+            <input type="number" id="objectiveCode" placeholder="Objective Code" required>
+            <input type="text" id="objectiveTitle" placeholder="Objective Title" required>
+            <textarea id="objectiveDescription" placeholder="Objective Description" required></textarea>
+            <button type="button" onclick="addLearningObjective()">Add Objective</button>
         </form>
     </div>
     <div>
@@ -21,7 +68,6 @@
         <div id="optionsDisplay"></div>
     </div>
 
-    <script src="script.js"></script>
 </body>
 </html>
 
