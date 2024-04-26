@@ -43,8 +43,7 @@ try:
             CREATE TABLE IF NOT EXISTS degrees (
                 name VARCHAR(255),
                 level VARCHAR(255),
-                name_level VARCHAR(255) AS (CONCAT(name, ' ', level)) STORED PRIMARY KEY,
-                UNIQUE (name_level)
+                PRIMARY KEY (name, level)
             )
         ''')
 
@@ -106,12 +105,13 @@ try:
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS degree_courses (
-              degree_courses_ID VARCHAR(255) PRIMARY KEY,
-              degree_ID VARCHAR(255),
-              course_number VARCHAR(255),
-              core_course BOOLEAN,
-              FOREIGN KEY (degree_ID) REFERENCES degrees (name_level),
-              FOREIGN KEY (course_number) REFERENCES courses (course_number)
+                degree_name VARCHAR(255),
+                degree_level VARCHAR(255),
+                course_number VARCHAR(255),
+                core_course BOOLEAN,
+                PRIMARY KEY (degree_name, degree_level, course_number),
+                FOREIGN KEY (degree_name, degree_level) REFERENCES degrees (name, level),
+                FOREIGN KEY (course_number) REFERENCES courses (course_number)
             )
         ''')
 

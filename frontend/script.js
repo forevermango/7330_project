@@ -118,3 +118,39 @@ async function fetchAvailableOptions() {
         alert('Error loading available options: ' + error);
     });
 }
+
+async function associateCourseWithDegree() {
+    const degree_name = document.getElementById('assocDegreeName').value;
+    const degree_level = document.getElementById('assocDegreeLevel').value;
+    const course_number = document.getElementById('assocCourseNumber').value;
+    const core_course = document.getElementById('assocCoreCourse').checked;
+
+    try {
+        const response = await fetch('http://127.0.0.1:8000/associate-course-with-degree/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ degree_name, degree_level, course_number, core_course })
+        });
+        const data = await response.json();
+        alert('Course associated with degree successfully: ' + JSON.stringify(data));
+    } catch (error) {
+        alert('Error associating course with degree: ' + error);
+    }
+}
+
+async function getCoursesByDegree() {
+    const degree_name = document.getElementById('viewDegreeName').value;
+    const degree_level = document.getElementById('viewDegreeLevel').value;
+
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/courses-by-degree/?degree_name=${encodeURIComponent(degree_name)}&degree_level=${encodeURIComponent(degree_level)}`, {
+            method: 'GET'
+        });
+        const data = await response.json();
+        const coursesList = document.getElementById('coursesList');
+        coursesList.innerHTML = '<h3>Courses:</h3>' + data.map(course => `${course.course_name} (Number: ${course.course_number}, Core: ${course.is_core_course ? 'Yes' : 'No'})`).join(', ');
+    } catch (error) {
+        alert('Error viewing courses: ' + error);
+    }
+}
+

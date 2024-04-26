@@ -68,6 +68,29 @@
         <div id="optionsDisplay"></div>
     </div>
 
+    <!-- Associate Course with Degree -->
+    <div>
+	<h2>Associate Course with Degree</h2>
+	<form id="associateCourseForm">
+		<input type="text" id="assocDegreeName" placeholder="Degree Name" required>
+		<input type="text" id="assocDegreeLevel" placeholder="Degree Level" required>
+		<input type="text" id="assocCourseNumber" placeholder="Course Number" required>
+		<input type="checkbox" id="assocCoreCourse" placeholder="Is Core Course">
+		<label for="assocCoreCourse">Core Course</label>
+		<button type="button" onclick="associateCourseWithDegree()">Associate Course</button>
+	</form>
+    </div>
+    
+    <!-- View Courses by Degree -->
+    <div>
+	<h2>View Courses by Degree</h2>
+	<form id="viewCoursesForm">
+		<input type="text" id="viewDegreeName" placeholder="Degree Name" required>
+		<input type="text" id="viewDegreeLevel" placeholder="Degree Level" required>
+		<button type="button" onclick="getCoursesByDegree()">View Courses</button>
+	</form>
+	<div id="coursesList"></div>
+    </div>
 </body>
 </html>
 

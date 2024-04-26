@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import mysql.connector
@@ -227,3 +227,76 @@ async def available_options():
     finally:
         cursor.close()
         conn.close()
+
+class AssociateCourseWithDegree(BaseModel):
+    degree_name: str
+    degree_level: str
+    course_number: str
+    core_course: bool
+
+@app.post("/associate-course-with-degree/", status_code=status.HTTP_201_CREATED, summary="Associate a course with a degree", response_description="Course associated with degree successfully")
+async def associate_course_with_degree(association: AssociateCourseWithDegree):
+    """Associates a course with a degree in the database."""
+    # Connect to the database
+    conn = get_db_connection()
+    if conn is None:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+
+    try:
+        with conn.cursor() as cursor:
+            # Prepare the SQL query to insert the new association
+            query = """
+            INSERT INTO degree_courses (degree_name, degree_level, course_number, core_course)
+            VALUES (%s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                core_course = VALUES(core_course);
+            """
+            values = (association.degree_name, association.degree_level, association.course_number, association.core_course)
+
+            # Execute the query
+            cursor.execute(query, values)
+            conn.commit()
+            return {"message": "Course associated with degree successfully."}
+
+    except mysql.connector.Error as error:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=str(error))
+    finally:
+        if conn.is_connected():
+            conn.close()
+
+class CourseResponse(BaseModel):
+    course_number: str
+    course_name: str
+    is_core_course: bool
+
+    class Config:
+        orm_mode = True
+
+@app.get("/courses-by-degree/", response_model=List[CourseResponse], status_code=200, summary="Get courses by degree", response_description="List of courses for a specific degree")
+async def get_courses_by_degree(degree_name: str, degree_level: str):
+    """Fetches courses associated with a specific degree from the database."""
+    conn = get_db_connection()
+    if conn is None:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            # Query to fetch courses associated with a specific degree
+            query = """
+            SELECT c.course_number, c.name AS course_name, dc.core_course AS is_core_course
+            FROM courses c
+            JOIN degree_courses dc ON c.course_number = dc.course_number
+            WHERE dc.degree_name = %s AND dc.degree_level = %s;
+            """
+            cursor.execute(query, (degree_name, degree_level))
+            courses = cursor.fetchall()
+            if not courses:
+                raise HTTPException(status_code=404, detail="No courses found for the specified degree")
+            return [CourseResponse(**course) for course in courses]
+
+    except mysql.connector.Error as error:
+        raise HTTPException(status_code=400, detail=f"Database query error: {str(error)}")
+    finally:
+        if conn and conn.is_connected():
+            conn.close()
