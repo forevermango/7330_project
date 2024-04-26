@@ -210,7 +210,7 @@ async def available_options():
         logging.debug(f"Degrees fetched: {degrees}")
 
         logging.debug("Fetching semesters from database.")
-        cursor.execute("SELECT DISTINCT semester_year FROM semesters")
+        cursor.execute("SELECT year, semester FROM semesters ORDER BY year, semester")
         semester_rows = cursor.fetchall()
         semesters = [row[0] for row in semester_rows]
         logging.debug(f"Semesters fetched: {semesters}")

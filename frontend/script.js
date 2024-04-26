@@ -54,24 +54,27 @@ async function addSection() {
     const students = document.getElementById('numberOfStudents').value;
     const instructorId = document.getElementById('sectionInstructorId').value;
     const courseNumber = document.getElementById('sectionCourseNumber').value;
-    const semesterYear = document.getElementById('sectionSemesterYear').value;
+    const semester = document.getElementById('sectionSemester').value;
+    const year = document.getElementById('sectionYear').value;
 
     try {
-        const response = await fetch('http://127.0.0.1:8000/add-section/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                section_number: number,
-                number_of_students: students,
-                instructor_id: instructorId,
-                course_number: courseNumber,
-                semester_year: semesterYear
-            })
-        });
-        const data = await response.json();
-        alert('Section added successfully: ' + JSON.stringify(data));
+	const response = await fetch('http://127.0.0.1:8000/add-section/', {
+	    method: 'POST',
+	    headers: { 'Content-Type': 'application/json' },
+	    body: JSON.stringify({
+		section_number: number,
+		number_of_students: students,
+		instructor_id: instructorId,
+		course_number: courseNumber,
+		semester: semester,
+		year: year
+	    })
+	});
+	if (!response.ok) throw new Error('Failed to add section. Status: ' + response.status);
+	const data = await response.json();
+	alert('Section added successfully: ' + JSON.stringify(data));
     } catch (error) {
-        alert('Error adding section: ' + error);
+	alert('Error adding section: ' + error.message);
     }
 }
 
