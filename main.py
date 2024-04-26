@@ -55,11 +55,29 @@ try:
         ''')
 
         cursor.execute('''
+            CREATE TABLE IF NOT EXISTS semester_sort_order (
+                semester VARCHAR(255) PRIMARY KEY,
+                sort_order INT
+            );
+        ''')
+
+        # Insert semester sorting order
+        cursor.execute('''
+        INSERT INTO semester_sort_order (semester, sort_order) VALUES
+            ('Winter', 1),
+            ('Spring', 2),
+            ('Summer', 3),
+            ('Fall', 4)
+            ON DUPLICATE KEY UPDATE sort_order=VALUES(sort_order);
+        ''')
+
+        cursor.execute('''
             CREATE TABLE IF NOT EXISTS semesters (
-                semester_year VARCHAR(255) AS (CONCAT(year, ' ', semester)) STORED PRIMARY KEY,
                 year INT,
-                semester VARCHAR(255)
-            )
+                semester VARCHAR(255),
+                PRIMARY KEY (year, semester),
+                FOREIGN KEY (semester) REFERENCES semester_sort_order(semester) ON UPDATE CASCADE
+            );
         ''')
 
         # Insert semesters for Fall and Spring 2024
@@ -81,10 +99,11 @@ try:
               number_of_students INT,
               instructor_id INT,
               course_number VARCHAR(255),
-              semester_year VARCHAR(255),
+              year INT,
+              semester VARCHAR(255),
               FOREIGN KEY (instructor_id) REFERENCES instructors (instructor_id),
               FOREIGN KEY (course_number) REFERENCES courses (course_number),
-              FOREIGN KEY (semester_year) REFERENCES semesters (semester_year)
+              FOREIGN KEY (year, semester) REFERENCES semesters (year, semester)
             )
         ''')
 
@@ -92,14 +111,9 @@ try:
             CREATE TABLE IF NOT EXISTS sections_courses (
               course_number VARCHAR(255),
               section_number INT,
-              number_of_students INT,
-              instructor_id INT,
-              semester_year VARCHAR(255),
-              course_section VARCHAR(255),
-              PRIMARY KEY (course_section),
+              PRIMARY KEY (course_number, section_number),
               FOREIGN KEY (course_number) REFERENCES courses (course_number),
-              FOREIGN KEY (instructor_id) REFERENCES instructors (instructor_id),
-              FOREIGN KEY (semester_year) REFERENCES semesters (semester_year)
+              FOREIGN KEY (section_number) REFERENCES sections (section_number)
             )
         ''')
 

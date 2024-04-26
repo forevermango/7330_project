@@ -56,7 +56,8 @@ class Section(BaseModel):
     number_of_students: int
     instructor_id: int
     course_number: str
-    semester_year: str
+    year: int
+    semester: str
 
 class LearningObjective(BaseModel):
     code: int
@@ -86,7 +87,7 @@ async def add_instructor(instructor: Instructor):
 
 @app.post("/add-section/", status_code=201, summary="Add a new section", response_description="Section added successfully")
 async def add_section(section: Section):
-    return await add_entity(section, "sections", ("section_number", "number_of_students", "instructor_id", "course_number", "semester_year"))
+    return await add_entity(section, "sections", ("section_number", "number_of_students", "instructor_id", "course_number", "year", "semester"))
 
 @app.post("/add-learning-objective/", status_code=201, summary="Add a new learning objective", response_description="Learning objective added successfully")
 async def add_learning_objective(learning_objective: LearningObjective):
