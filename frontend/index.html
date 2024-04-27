@@ -156,6 +156,19 @@
 	    </form>
 	    <div id="sectionsByCourseDisplay"></div>
     </div>
+    <!-- Query Sections by Instructor and Semester Range -->
+    <div>
+	    <h2>Query Sections by Instructor and Semester Range</h2>
+	    <form id="querySectionsByInstructorForm">
+		    <input type="number" id="instructorIdQuery" placeholder="Instructor ID" required>
+		    <input type="number" id="instructorStartYearQuery" placeholder="Start Year" required>
+		    <input type="text" id="instructorStartSemesterQuery" placeholder="Start Semester" required>
+		    <input type="number" id="instructorEndYearQuery" placeholder="End Year" required>
+		    <input type="text" id="instructorEndSemesterQuery" placeholder="End Semester" required>
+		    <button type="button" onclick="getSectionsByInstructor()">Query Sections</button>
+	    </form>
+	    <div id="sectionsByInstructorDisplay"></div>
+    </div>
 
 
 
