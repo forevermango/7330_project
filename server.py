@@ -148,36 +148,38 @@ class SectionDetails(BaseModel):
     number_of_students: int
 
 class EvaluationData(BaseModel):
-    section_id: int
+    section_ID: int
+    objective_code: int  # Ensure this is included and required
     eval_criteria: str
-    eval_a_count: int
-    eval_b_count: int
-    eval_c_count: int
-    eval_f_count: int
+    eval_A_count: int
+    eval_B_count: int
+    eval_C_count: int
+    eval_F_count: int
     improvements: str
 
-@app.post("/update-evaluation/", status_code=201, summary="Update evaluation data", response_description="Evaluation updated successfully")
+@app.post("/update-evaluation/", response_model=dict)
 async def update_evaluation(eval_data: EvaluationData):
     conn = get_db_connection()
-    cursor = conn.cursor()
-    # Check if evaluation exists
-    cursor.execute("SELECT * FROM course_evaluations WHERE section_ID = %s", (eval_data.section_id,))
-    existing_data = cursor.fetchone()
-    if existing_data:
-        # Update existing evaluation
-        cursor.execute("""
-            UPDATE course_evaluation SET eval_criteria = %s, eval_A_count = %s, eval_B_count = %s, eval_C_count = %s, eval_F_count = %s, improvements = %s
-            WHERE section_ID = %s
-            """, (eval_data.eval_criteria, eval_data.eval_a_count, eval_data.eval_b_count, eval_data.eval_c_count, eval_data.eval_f_count, eval_data.improvements, eval_data.section_id))
-    else:
-        # Insert new evaluation
-        cursor.execute("""
-            INSERT INTO course_evaluations (section_ID, eval_criteria, eval_A_count, eval_B_count, eval_C_count, eval_F_count, improvements)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (eval_data.section_id, eval_data.eval_criteria, eval_data.eval_a_count, eval_data.eval_b_count, eval_data.eval_c_count, eval_data.eval_f_count, eval_data.improvements))
-    conn.commit()
-    conn.close()
-    return {"status": "Evaluation updated successfully"}
+    if not conn:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+    
+    try:
+        with conn.cursor() as cursor:
+            # Insert or update evaluation
+            cursor.execute("""
+            INSERT INTO course_evaluations (section_ID, objective_code, eval_criteria, eval_A_count, eval_B_count, eval_C_count, eval_F_count, improvements)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                objective_code=VALUES(objective_code), eval_criteria=VALUES(eval_criteria),
+                eval_A_count=VALUES(eval_A_count), eval_B_count=VALUES(eval_B_count),
+                eval_C_count=VALUES(eval_C_count), eval_F_count=VALUES(eval_F_count), improvements=VALUES(improvements);
+            """, (eval_data.section_ID, eval_data.objective_code, eval_data.eval_criteria, eval_data.eval_A_count, eval_data.eval_B_count, 
+                  eval_data.eval_C_count, eval_data.eval_F_count, eval_data.improvements))
+            conn.commit()
+            return {"status": "Evaluation updated successfully"}
+    finally:
+        if conn.is_connected():
+            conn.close()
 
 class DegreeOption(BaseModel):
     name: str
@@ -449,15 +451,6 @@ async def get_sections_by_instructor_semester(instructor_id: int, year: int, sem
         if conn.is_connected():
             conn.close()
 
-class Evaluation(BaseModel):
-    eval_ID: int = None
-    eval_criteria: str = None
-    eval_A_count: int = None
-    eval_B_count: int = None
-    eval_C_count: int = None
-    eval_F_count: int = None
-    improvements: str = None
-
 class SectionEvaluation(BaseModel):
     section_number: int
     course_number: str
@@ -465,7 +458,7 @@ class SectionEvaluation(BaseModel):
     year: int
     semester: str
     instructor_id: int
-    evaluation: Evaluation = None  # Nested model for evaluation data
+    evaluation: EvaluationData = None
 
 
 @app.get("/sections-with-evaluations/", response_model=List[SectionEvaluation])
@@ -502,18 +495,16 @@ async def update_evaluation(eval_data: EvaluationData):
         with conn.cursor() as cursor:
             # Update or insert evaluation
             cursor.execute("""
-            INSERT INTO course_evaluations (section_ID, eval_criteria, eval_A_count, eval_B_count, eval_C_count, eval_F_count, improvements)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO course_evaluations (
+                section_ID, objective_code, eval_criteria, eval_A_count, eval_B_count, eval_C_count, eval_F_count, improvements)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE
-                eval_criteria=VALUES(eval_criteria), eval_A_count=VALUES(eval_A_count), eval_B_count=VALUES(eval_B_count),
-                eval_C_count=VALUES(eval_C_count), eval_F_count=VALUES(eval_F_count), improvements=VALUES(improvements);
-            """, (eval_data.section_ID, eval_data.eval_criteria, eval_data.eval_A_count, eval_data.eval_B_count, eval_data.eval_C_count, eval_data.eval_F_count, eval_data.improvements))
+                objective_code=VALUES(objective_code), eval_criteria=VALUES(eval_criteria), eval_A_count=VALUES(eval_A_count), 
+                eval_B_count=VALUES(eval_B_count), eval_C_count=VALUES(eval_C_count), eval_F_count=VALUES(eval_F_count), 
+                improvements=VALUES(improvements);
+            """, (eval_data.section_ID, eval_data.objective_code, eval_data.eval_criteria, eval_data.eval_A_count, eval_data.eval_B_count, 
+                  eval_data.eval_C_count, eval_data.eval_F_count, eval_data.improvements))
             conn.commit()
-            
-            # Duplicate evaluations if requested
-            if eval_data.duplicate_to_other_degrees:
-                duplicate_evaluations(cursor, eval_data)
-            
             return {"status": "Evaluation updated successfully"}
     finally:
         if conn.is_connected():
