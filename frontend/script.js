@@ -157,3 +157,24 @@ async function getCoursesByDegree() {
     }
 }
 
+async function listSections() {
+    const startYear = document.getElementById('startYear').value;
+    const startSemester = document.getElementById('startSemester').value;
+    const endYear = document.getElementById('endYear').value;
+    const endSemester = document.getElementById('endSemester').value;
+
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/list-sections/?start_year=${startYear}&start_semester=${startSemester}&end_year=${endYear}&end_semester=${endSemester}`, {
+            method: 'GET'
+        });
+        if (!response.ok) throw new Error('Failed to fetch sections. Status: ' + response.status);
+        const sections = await response.json();
+        const sectionsDisplay = document.getElementById('sectionsDisplay');
+        sectionsDisplay.innerHTML = '<h3>Sections:</h3>' + sections.map(section => 
+            `Number: ${section.section_number}, Students: ${section.number_of_students}, Instructor ID: ${section.instructor_id}, Course: ${section.course_number}, Year: ${section.year}, Semester: ${section.semester}`
+        ).join('<br>');
+    } catch (error) {
+        alert('Error fetching sections: ' + error.message);
+    }
+}
+

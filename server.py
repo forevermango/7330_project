@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status, Depends
+from fastapi import FastAPI, HTTPException, status, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import mysql.connector
@@ -300,4 +300,32 @@ async def get_courses_by_degree(degree_name: str, degree_level: str):
         raise HTTPException(status_code=400, detail=f"Database query error: {str(error)}")
     finally:
         if conn and conn.is_connected():
+            conn.close()
+
+@app.get("/list-sections/", response_model=List[Section])
+async def list_sections(
+    start_year: int = Query(..., description="Start year of the query range"),
+    start_semester: str = Query(..., description="Start semester of the query range"),
+    end_year: int = Query(..., description="End year of the query range"),
+    end_semester: str = Query(..., description="End semester of the query range")):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT s.section_number, s.number_of_students, s.instructor_id, s.course_number, sem.year, sem.semester
+            FROM sections s
+            JOIN semesters sem ON s.year = sem.year AND s.semester = sem.semester
+            JOIN semester_sort_order so ON sem.semester = so.semester
+            WHERE (sem.year > %s OR (sem.year = %s AND so.sort_order >= (SELECT sort_order FROM semester_sort_order WHERE semester = %s)))
+              AND (sem.year < %s OR (sem.year = %s AND so.sort_order <= (SELECT sort_order FROM semester_sort_order WHERE semester = %s)))
+            ORDER BY sem.year, so.sort_order
+        """, (start_year, start_year, start_semester, end_year, end_year, end_semester))
+        sections = cursor.fetchall()
+        return [Section(**section) for section in sections]
+    except mysql.connector.Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
             conn.close()

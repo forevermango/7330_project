@@ -92,6 +92,31 @@
 	</form>
 	<div id="coursesList"></div>
     </div>
+
+    <!-- Section Query Entry -->
+    <div>
+	    <h2>Query Sections by Semester Range</h2>
+	    <form id="querySectionsForm">
+		    <input type="number" id="startYear" placeholder="Start Year" required>
+		    <select id="startSemester" required>
+			    <option value="Winter">Winter</option>
+			    <option value="Spring">Spring</option>
+			    <option value="Summer">Summer</option>
+			    <option value="Fall">Fall</option>
+		    </select>
+		    <input type="number" id="endYear" placeholder="End Year" required>
+		    <select id="endSemester" required>
+			    <option value="Winter">Winter</option>
+			    <option value="Spring">Spring</option>
+			    <option value="Summer">Summer</option>
+			    <option value="Fall">Fall</option>
+		    </select>
+		    <button type="button" onclick="listSections()">Query Sections</button>
+	    </form>
+	    <div id="sectionsDisplay"></div>
+    </div>
+
+
 </body>
 </html>
 
