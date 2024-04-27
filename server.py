@@ -427,3 +427,24 @@ async def get_sections_by_instructor(instructor_id: int, start_year: int, start_
     finally:
         if conn.is_connected():
             conn.close()
+
+@app.get("/sections-by-instructor-semester/", response_model=List[Section])
+async def get_sections_by_instructor_semester(instructor_id: int, year: int, semester: str):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            query = """
+            SELECT section_number, course_number, number_of_students, year, semester, instructor_id
+            FROM sections
+            WHERE instructor_id = %s AND year = %s AND semester = %s
+            ORDER BY year, semester;
+            """
+            cursor.execute(query, (instructor_id, year, semester))
+            sections = cursor.fetchall()
+            return sections
+    finally:
+        if conn.is_connected():
+            conn.close()
