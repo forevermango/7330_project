@@ -16,14 +16,20 @@ async function addDegree() {
 }
 
 async function addCourse() {
-    const number = document.getElementById('courseNumber').value;
     const name = document.getElementById('courseName').value;
+    const departmentCode = document.getElementById('departmentCode').value;
+    const courseCode = parseInt(document.getElementById('courseCode').value, 10);
+
+    if (!(courseCode >= 1000 && courseCode <= 9999)) {
+        alert('Course code must be between 1000 and 9999.');
+        return;
+    }
 
     try {
         const response = await fetch('http://127.0.0.1:8000/add-course/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ course_number: number, name })
+            body: JSON.stringify({ name, department_code: departmentCode, course_code: courseCode })
         });
         const data = await response.json();
         alert('Course added successfully: ' + JSON.stringify(data));
@@ -153,7 +159,7 @@ async function getCoursesByDegree() {
         const response = await fetch(`http://127.0.0.1:8000/courses-by-degree/?degree_name=${encodeURIComponent(degree_name)}&degree_level=${encodeURIComponent(degree_level)}`, {
             method: 'GET'
         });
-        const data = await response.json();
+	const data = await response.json();
         const coursesList = document.getElementById('coursesList');
         coursesList.innerHTML = '<h3>Courses:</h3>' + data.map(course => `${course.course_name} (Number: ${course.course_number}, Core: ${course.is_core_course ? 'Yes' : 'No'})`).join(', ');
     } catch (error) {
@@ -196,3 +202,20 @@ async function listLearningObjectives() {
     }
 }
 
+async function associateCourseWithObjective() {
+    const course_number = document.getElementById('assocCourseNumber').value;
+    const objective_code = document.getElementById('assocObjectiveCode').value;
+
+    try {
+        const response = await fetch('http://127.0.0.1:8000/associate-course-objective/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ course_number, objective_code })
+        });
+        if (!response.ok) throw new Error('Failed to associate. Status: ' + response.status);
+        const data = await response.json();
+        alert('Course associated with learning objective successfully: ' + JSON.stringify(data));
+    } catch (error) {
+        alert('Error associating course with objective: ' + error.message);
+    }
+}

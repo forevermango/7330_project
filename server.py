@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, status, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
 import mysql.connector
 import os
 from typing import List
@@ -44,8 +44,12 @@ class Degree(BaseModel):
     level: str
 
 class Course(BaseModel):
-    course_number: str
     name: str
+    department_code: constr(min_length=2, max_length=4)
+    course_code: int  # Ensure within the valid range (1000 to 9999)
+
+    class Config:
+        orm_mode = True
 
 class Instructor(BaseModel):
     instructor_id: int
@@ -79,7 +83,17 @@ async def add_degree(degree: Degree):
 
 @app.post("/add-course/", status_code=201, summary="Add a new course", response_description="Course added successfully")
 async def add_course(course: Course):
-    return await add_entity(course, "courses", ("course_number", "name"))
+    # Validate course_code range
+    if not (1000 <= course.course_code <= 9999):
+        raise HTTPException(status_code=400, detail="Course code must be between 1000 and 9999.")
+
+    # Use add_entity to insert the course into the database
+    try:
+        response = await add_entity(course, "courses", ("name", "department_code", "course_code"))
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 @app.post("/add-instructor/", status_code=201, summary="Add a new instructor", response_description="Instructor added successfully")
 async def add_instructor(instructor: Instructor):
@@ -269,11 +283,9 @@ class CourseResponse(BaseModel):
     course_name: str
     is_core_course: bool
 
-    class Config:
-        orm_mode = True
 
 @app.get("/courses-by-degree/", response_model=List[CourseResponse], status_code=200, summary="Get courses by degree", response_description="List of courses for a specific degree")
-async def get_courses_by_degree(degree_name: str, degree_level: str):
+async def get_courses_by_degree(degree_name: str = Query(..., description="The name of the degree"), degree_level: str = Query(..., description="The level of the degree (e.g., Bachelor, Master)")):
     """Fetches courses associated with a specific degree from the database."""
     conn = get_db_connection()
     if conn is None:
@@ -339,3 +351,7 @@ async def list_learning_objectives():
     finally:
         if conn.is_connected():
             conn.close()
+
+@app.post("/associate-course-objective/", status_code=201, summary="Associate a course with a learning objective", response_description="Association created successfully")
+async def associate_course_objective(association: CourseObjectiveAssociation):
+    return await add_entity(association, "course_learning_objectives", ("course_number", "objective_code"))

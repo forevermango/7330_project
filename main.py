@@ -49,9 +49,11 @@ try:
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS courses (
-              course_number VARCHAR(255) PRIMARY KEY,
-              name VARCHAR(255) UNIQUE
-            )
+                department_code VARCHAR(4) NOT NULL CHECK (LENGTH(department_code) BETWEEN 2 AND 4),
+                course_code INT NOT NULL CHECK (course_code BETWEEN 1000 AND 9999),
+                course_number VARCHAR(8) AS (CONCAT(department_code, LPAD(course_code, 4, '0'))) STORED PRIMARY KEY,
+                name VARCHAR(255) UNIQUE
+                )
         ''')
 
         cursor.execute('''

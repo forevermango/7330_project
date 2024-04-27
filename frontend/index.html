@@ -21,12 +21,13 @@
 
     <!-- Course Information Entry -->
     <div>
-        <h2>Add New Course</h2>
-        <form id="newCourseForm">
-            <input type="text" id="courseNumber" placeholder="Course Number" required>
-            <input type="text" id="courseName" placeholder="Course Name" required>
-            <button type="button" onclick="addCourse()">Add Course</button>
-        </form>
+	    <h2>Add New Course</h2>
+	    <form id="newCourseForm">
+		    <input type="text" id="courseName" placeholder="Course Name" required>
+		    <input type="text" id="departmentCode" placeholder="Department Code" required>
+		    <input type="number" id="courseCode" placeholder="Course Code" required>
+		    <button type="button" onclick="addCourse()">Add Course</button>
+	    </form>
     </div>
 
     <!-- Instructor Information Entry -->
@@ -121,6 +122,16 @@
 	    <h2>Learning Objectives</h2>
 	    <button type="button" onclick="listLearningObjectives()">Load Objectives</button>
 	    <div id="objectivesDisplay"></div>
+    </div>
+
+    <!-- Associate Course with Learning Objective -->
+    <div>
+	    <h2>Associate Course with Learning Objective</h2>
+	    <form id="associateCourseObjectiveForm">
+		    <input type="text" id="assocCourseNumber" placeholder="Course Number" required>
+		    <input type="number" id="assocObjectiveCode" placeholder="Objective Code" required>
+		    <button type="button" onclick="associateCourseWithObjective()">Associate</button>
+	    </form>
     </div>
 </body>
 </html>
