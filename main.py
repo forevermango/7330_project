@@ -141,7 +141,7 @@ try:
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS course_evaluations (
-              eval_ID INT PRIMARY KEY,
+              eval_ID INT AUTO_INCREMENT PRIMARY KEY,
               section_ID INT,
               objective_code INT,
               eval_criteria VARCHAR(255),

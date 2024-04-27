@@ -448,3 +448,93 @@ async def get_sections_by_instructor_semester(instructor_id: int, year: int, sem
     finally:
         if conn.is_connected():
             conn.close()
+
+class Evaluation(BaseModel):
+    eval_ID: int = None
+    eval_criteria: str = None
+    eval_A_count: int = None
+    eval_B_count: int = None
+    eval_C_count: int = None
+    eval_F_count: int = None
+    improvements: str = None
+
+class SectionEvaluation(BaseModel):
+    section_number: int
+    course_number: str
+    number_of_students: int
+    year: int
+    semester: str
+    instructor_id: int
+    evaluation: Evaluation = None  # Nested model for evaluation data
+
+
+@app.get("/sections-with-evaluations/", response_model=List[SectionEvaluation])
+async def get_sections_with_evaluations(instructor_id: int, degree_name: str, year: int, semester: str):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+    
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            query = """
+            SELECT s.section_number, s.course_number, s.number_of_students, s.year, s.semester,
+                   e.eval_ID, e.eval_criteria, e.eval_A_count, e.eval_B_count, e.eval_C_count, e.eval_F_count, e.improvements
+            FROM sections s
+            LEFT JOIN course_evaluations e ON s.section_number = e.section_ID
+            JOIN degree_courses dc ON s.course_number = dc.course_number
+            WHERE s.instructor_id = %s AND dc.degree_name = %s AND s.year = %s AND s.semester = %s
+            ORDER BY s.year, s.semester;
+            """
+            cursor.execute(query, (instructor_id, degree_name, year, semester))
+            sections = cursor.fetchall()
+            return sections
+    finally:
+        if conn.is_connected():
+            conn.close()
+
+@app.post("/update-evaluation/", response_model=dict)
+async def update_evaluation(eval_data: EvaluationData):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+    
+    try:
+        with conn.cursor() as cursor:
+            # Update or insert evaluation
+            cursor.execute("""
+            INSERT INTO course_evaluations (section_ID, eval_criteria, eval_A_count, eval_B_count, eval_C_count, eval_F_count, improvements)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                eval_criteria=VALUES(eval_criteria), eval_A_count=VALUES(eval_A_count), eval_B_count=VALUES(eval_B_count),
+                eval_C_count=VALUES(eval_C_count), eval_F_count=VALUES(eval_F_count), improvements=VALUES(improvements);
+            """, (eval_data.section_ID, eval_data.eval_criteria, eval_data.eval_A_count, eval_data.eval_B_count, eval_data.eval_C_count, eval_data.eval_F_count, eval_data.improvements))
+            conn.commit()
+            
+            # Duplicate evaluations if requested
+            if eval_data.duplicate_to_other_degrees:
+                duplicate_evaluations(cursor, eval_data)
+            
+            return {"status": "Evaluation updated successfully"}
+    finally:
+        if conn.is_connected():
+            conn.close()
+
+def duplicate_evaluations(cursor, eval_data):
+    # Fetch all associated degrees for the course
+    cursor.execute("""
+    SELECT degree_name FROM degree_courses WHERE course_number = (SELECT course_number FROM sections WHERE section_number = %s)
+    """, (eval_data.section_ID,))
+    degrees = cursor.fetchall()
+    for degree in degrees:
+        if degree['degree_name'] != eval_data.current_degree:
+            # Duplicate evaluation data for other degrees
+            cursor.execute("""
+            INSERT INTO course_evaluations (degree_name, section_ID, eval_criteria, eval_A_count, eval_B_count, eval_C_count, eval_F_count, improvements)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                eval_criteria=VALUES(eval_criteria), eval_A_count=VALUES(eval_A_count), eval_B_count=VALUES(eval_B_count),
+                eval_C_count=VALUES(eval_C_count), eval_F_count=VALUES(eval_F_count), improvements=VALUES(improvements);
+            """, (degree['degree_name'], eval_data.section_ID, eval_data.eval_criteria, eval_data.eval_A_count, eval_data.eval_B_count, eval_data.eval_C_count, eval_data.eval_F_count, eval_data.improvements))
+            cursor.commit()
+
+
