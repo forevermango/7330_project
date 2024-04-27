@@ -202,24 +202,21 @@ async def available_options():
         logging.error("Failed to connect to the database.")
         raise HTTPException(status_code=500, detail="Database connection failed")
     try:
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)  # Use dictionary cursor
         logging.debug("Fetching degrees from database.")
         cursor.execute("SELECT name, level FROM degrees")
         degree_rows = cursor.fetchall()
-        degrees = [DegreeOption(name=name, level=level) for name, level in degree_rows]
-        logging.debug(f"Degrees fetched: {degrees}")
+        degrees = [DegreeOption(name=row['name'], level=row['level']) for row in degree_rows]
 
         logging.debug("Fetching semesters from database.")
-        cursor.execute("SELECT year, semester FROM semesters ORDER BY year, semester")
+        cursor.execute("SELECT CONCAT(year, ' ', semester) AS semester_year FROM semesters ORDER BY year, semester")
         semester_rows = cursor.fetchall()
-        semesters = [row[0] for row in semester_rows]
-        logging.debug(f"Semesters fetched: {semesters}")
+        semesters = [row['semester_year'] for row in semester_rows]
 
         logging.debug("Fetching instructors from database.")
         cursor.execute("SELECT instructor_id, name FROM instructors")
         instructor_rows = cursor.fetchall()
-        instructors = [InstructorOption(id=id, name=name) for id, name in instructor_rows]
-        logging.debug(f"Instructors fetched: {instructors}")
+        instructors = [InstructorOption(id=row['instructor_id'], name=row['name']) for row in instructor_rows]
 
         return AvailableOptions(degrees=degrees, semesters=semesters, instructors=instructors)
     except Exception as e:
@@ -228,6 +225,7 @@ async def available_options():
     finally:
         cursor.close()
         conn.close()
+
 
 class AssociateCourseWithDegree(BaseModel):
     degree_name: str
