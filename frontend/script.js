@@ -291,3 +291,45 @@ async function getSectionsByInstructor() {
     }
 }
 
+async function submitEvaluation() {
+    const sectionID = parseInt(document.getElementById('sectionID').value, 10);
+    const objectiveCode = parseInt(document.getElementById('objectiveCode_EvalQuery').value, 10);
+    const evalCriteria = document.getElementById('evalCriteria').value;
+    const evalACount = parseInt(document.getElementById('evalACount').value, 10);
+    const evalBCount = parseInt(document.getElementById('evalBCount').value, 10);
+    const evalCCount = parseInt(document.getElementById('evalCCount').value, 10);
+    const evalFCount = parseInt(document.getElementById('evalFCount').value, 10);
+    const improvements = document.getElementById('improvements').value;
+
+    const evalData = {
+        section_ID: sectionID,
+        objective_code: objectiveCode,
+        eval_criteria: evalCriteria,
+        eval_A_count: evalACount,
+        eval_B_count: evalBCount,
+        eval_C_count: evalCCount,
+        eval_F_count: evalFCount,
+        improvements: improvements
+    };
+
+    try {
+        const response = await fetch('http://127.0.0.1:8000/update-evaluation/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(evalData)
+        });
+
+        if (!response.ok) {
+            const message = `An error has occured: ${response.status}`;
+            throw new Error(message);
+        }
+
+        const result = await response.json();
+        alert('Evaluation Submitted Successfully: ' + JSON.stringify(result));
+    } catch (error) {
+        console.error('Error during evaluation submission:', error);
+        alert('Failed to submit evaluation: ' + error.message);
+    }
+}

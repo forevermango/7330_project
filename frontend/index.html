@@ -170,6 +170,23 @@
 	    <div id="sectionsByInstructorDisplay"></div>
     </div>
 
+    <!-- Enter Course Evaluations -->
+    <div>
+	    <h1>Enter Course Evaluation</h1>
+	    <form id="evaluationForm">
+		    <input type="number" id="sectionID" placeholder="Section ID" required><br>
+		    <input type="number" id="objectiveCode_EvalQuery" placeholder="Objective Code" required><br>
+		    <input type="text" id="evalCriteria" placeholder="Evaluation Criteria" required><br>
+		    <input type="number" id="evalACount" placeholder="A Count" required><br>
+		    <input type="number" id="evalBCount" placeholder="B Count" required><br>
+		    <input type="number" id="evalCCount" placeholder="C Count" required><br>
+		    <input type="number" id="evalFCount" placeholder="F Count" required><br>
+		    <textarea id="improvements" placeholder="Improvements"></textarea><br>
+		    <button type="button" onclick="submitEvaluation()">Submit Evaluation</button>
+	    </form>
+
+    </div>
+
 
 
 </body>
