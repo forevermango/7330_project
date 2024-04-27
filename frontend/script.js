@@ -222,3 +222,22 @@ async function associateCourseWithObjective() {
         alert('Error associating course with objective: ' + error.message);
     }
 }
+
+async function getCoursesByObjective() {
+    const objectiveCode = document.getElementById('objectiveCodeQuery').value;
+    
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/courses-by-objective/?objective_codes=${objectiveCode}`, {
+            method: 'GET'
+        });
+        if (!response.ok) throw new Error('Failed to fetch courses. Status: ' + response.status);
+        const courses = await response.json();
+        const coursesDisplay = document.getElementById('coursesByObjectiveDisplay');
+        coursesDisplay.innerHTML = '<h3>Courses:</h3>' + courses.map(course => 
+            `Name: ${course.course_name} (Number: ${course.course_number}, Core: ${course.is_core_course ? 'Yes' : 'No'})`
+        ).join('<br>');
+    } catch (error) {
+        alert('Error fetching courses: ' + error.message);
+    }
+}
+

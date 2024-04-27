@@ -355,3 +355,29 @@ async def list_learning_objectives():
 @app.post("/associate-course-objective/", status_code=201, summary="Associate a course with a learning objective", response_description="Association created successfully")
 async def associate_course_objective(association: CourseObjectiveAssociation):
     return await add_entity(association, "course_learning_objectives", ("course_number", "objective_code"))
+
+@app.get("/courses-by-objective/", response_model=List[CourseResponse])
+async def get_courses_by_objective(objective_codes: List[int] = Query(..., description="List of objective codes")):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+    
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            format_strings = ','.join(['%s'] * len(objective_codes))
+            query = """
+            SELECT c.course_number, c.name AS course_name, COALESCE(dc.core_course, False) AS is_core_course
+            FROM courses c
+            LEFT JOIN degree_courses dc ON c.course_number = dc.course_number
+            JOIN course_learning_objectives clo ON c.course_number = clo.course_number
+            WHERE clo.objective_code IN (%s)
+            """
+            cursor.execute(query % format_strings, tuple(objective_codes))
+            courses = cursor.fetchall()
+            if not courses:
+                raise HTTPException(status_code=404, detail="No courses found for the specified objectives")
+            return [CourseResponse(**course) for course in courses]
+    finally:
+        if conn.is_connected():
+            conn.close()
+

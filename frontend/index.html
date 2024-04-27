@@ -133,6 +133,17 @@
 		    <button type="button" onclick="associateCourseWithObjective()">Associate</button>
 	    </form>
     </div>
+    <!-- Query Courses by Learning Objective -->
+    <div>
+	    <h2>Query Courses by Learning Objective</h2>
+	    <form id="queryCoursesByObjectiveForm">
+		    <input type="number" id="objectiveCodeQuery" placeholder="Objective Code" required>
+		    <button type="button" onclick="getCoursesByObjective()">Query Courses</button>
+	    </form>
+	    <div id="coursesByObjectiveDisplay"></div>
+    </div>
+
+
 </body>
 </html>
 
