@@ -178,3 +178,17 @@ async function listSections() {
     }
 }
 
+async function listLearningObjectives() {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/learning-objectives/');
+        if (!response.ok) throw new Error('Failed to fetch objectives. Status: ' + response.status);
+        const objectives = await response.json();
+        const objectivesDisplay = document.getElementById('objectivesDisplay');
+        objectivesDisplay.innerHTML = '<h3>Objectives:</h3>' + objectives.map(obj => 
+            `Code: ${obj.code}, Title: ${obj.title}, Description: ${obj.description}`
+        ).join('<br>');
+    } catch (error) {
+        alert('Error fetching objectives: ' + error.message);
+    }
+}
+

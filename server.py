@@ -329,3 +329,15 @@ async def list_sections(
             cursor.close()
         if conn:
             conn.close()
+
+@app.get("/learning-objectives/", response_model=List[LearningObjective])
+async def list_learning_objectives():
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT code, title, description FROM learning_objectives")
+        objectives = cursor.fetchall()
+        return [LearningObjective(**obj) for obj in objectives]
+    finally:
+        if conn.is_connected():
+            conn.close()
