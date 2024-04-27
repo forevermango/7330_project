@@ -430,27 +430,6 @@ async def get_sections_by_instructor(instructor_id: int, start_year: int, start_
         if conn.is_connected():
             conn.close()
 
-@app.get("/sections-by-instructor-semester/", response_model=List[Section])
-async def get_sections_by_instructor_semester(instructor_id: int, year: int, semester: str):
-    conn = get_db_connection()
-    if not conn:
-        raise HTTPException(status_code=500, detail="Failed to connect to the database")
-
-    try:
-        with conn.cursor(dictionary=True) as cursor:
-            query = """
-            SELECT section_number, course_number, number_of_students, year, semester, instructor_id
-            FROM sections
-            WHERE instructor_id = %s AND year = %s AND semester = %s
-            ORDER BY year, semester;
-            """
-            cursor.execute(query, (instructor_id, year, semester))
-            sections = cursor.fetchall()
-            return sections
-    finally:
-        if conn.is_connected():
-            conn.close()
-
 class SectionEvaluation(BaseModel):
     section_number: int
     course_number: str
@@ -459,6 +438,31 @@ class SectionEvaluation(BaseModel):
     semester: str
     instructor_id: int
     evaluation: EvaluationData = None
+
+
+@app.get("/instructor-sections/", response_model=List[SectionEvaluation])
+async def get_instructor_sections(instructor_id: int, degree_name: str, year: int, semester: str):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+    
+    try:
+        cursor = conn.cursor(dictionary=True)
+        query = """
+        SELECT s.section_number, s.course_number, s.number_of_students, s.year, s.semester,
+               e.eval_ID is not null as has_evaluation
+        FROM sections s
+        JOIN degree_courses dc ON s.course_number = dc.course_number
+        LEFT JOIN course_evaluations e ON s.section_number = e.section_ID
+        WHERE s.instructor_id = %s AND dc.degree_name = %s AND s.year = %s AND s.semester = %s
+        ORDER BY s.course_number;
+        """
+        cursor.execute(query, (instructor_id, degree_name, year, semester))
+        sections = cursor.fetchall()
+        return sections
+    finally:
+        if conn.is_connected():
+            conn.close()
 
 
 @app.get("/sections-with-evaluations/", response_model=List[SectionEvaluation])
@@ -528,4 +532,65 @@ def duplicate_evaluations(cursor, eval_data):
             """, (degree['degree_name'], eval_data.section_ID, eval_data.eval_criteria, eval_data.eval_A_count, eval_data.eval_B_count, eval_data.eval_C_count, eval_data.eval_F_count, eval_data.improvements))
             cursor.commit()
 
+
+@app.get("/degrees/", response_model=List[DegreeOption])
+async def list_degrees():
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT name, level FROM degrees")
+        degree_rows = cursor.fetchall()
+        return [DegreeOption(name=row['name'], level=row['level']) for row in degree_rows]
+    finally:
+        if conn.is_connected():
+            conn.close()
+
+@app.get("/instructors/", response_model=List[InstructorOption])
+async def list_instructors():
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT instructor_id, name FROM instructors")
+        instructor_rows = cursor.fetchall()
+        return [InstructorOption(id=row['instructor_id'], name=row['name']) for row in instructor_rows]
+    finally:
+        if conn.is_connected():
+            conn.close()
+
+@app.get("/semesters/", response_model=List[SemesterOption])
+async def list_semesters():
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT CONCAT(year, ' ', semester) AS semester_year FROM semesters ORDER BY year, semester")
+        semester_rows = cursor.fetchall()
+        return [SemesterOption(semester_year=row['semester_year']) for row in semester_rows]
+    finally:
+        if conn.is_connected():
+            conn.close()
+
+@app.get("/sections-by-instructor-degree-semester/", response_model=List[SectionDetails])
+async def get_sections_by_instructor_degree_semester(instructor_id: int, degree_name: str, semester: str, year: int):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+    
+    try:
+        cursor = conn.cursor(dictionary=True)
+        query = """
+        SELECT s.section_number, s.course_number, s.number_of_students, c.name AS course_name, s.year, s.semester
+        FROM sections s
+        JOIN courses c ON s.course_number = c.course_number
+        JOIN degree_courses dc ON c.course_number = dc.course_number
+        WHERE s.instructor_id = %s AND dc.degree_name = %s AND s.semester = %s AND s.year = %s
+        ORDER BY s.section_number;
+        """
+        cursor.execute(query, (instructor_id, degree_name, semester, year))
+        sections = cursor.fetchall()
+        return [SectionDetails(section_number=section['section_number'], course_name=section['course_name'], 
+                               course_number=section['course_number'], number_of_students=section['number_of_students'],
+                               year=section['year'], semester=section['semester']) for section in sections]
+    finally:
+        if conn.is_connected():
+            conn.close()
 

@@ -333,3 +333,78 @@ async function submitEvaluation() {
         alert('Failed to submit evaluation: ' + error.message);
     }
 }
+
+async function fetchSections() {
+    const instructorId = document.getElementById('instructorId_Eval').value;
+    const degreeName = document.getElementById('degreeName_Eval').value;
+    const year = new Date().getFullYear();  // Assuming current year; adjust as necessary
+    const semester = document.getElementById('semester_Eval').value;
+
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/instructor-sections/?instructor_id=${instructorId}&degree_name=${degreeName}&year=${year}&semester=${semester}`);
+        if (!response.ok) throw new Error('Failed to fetch sections');
+        const sections = await response.json();
+        displaySections(sections);  // Implement this function to show sections in the UI
+    } catch (error) {
+        console.error('Failed to load sections:', error);
+    }
+}
+
+window.onload = function() {
+    fetchInstructors();
+    fetchDegrees();
+};
+
+async function fetchInstructors() {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/instructors/');
+        const data = await response.json();
+        const select = document.getElementById('instructorSelect');
+        data.forEach(instructor => {
+            let option = document.createElement('option');
+            option.value = instructor.id;
+            option.textContent = instructor.name;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Failed to fetch instructors:', error);
+    }
+}
+
+async function fetchDegrees() {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/degrees/');
+        const data = await response.json();
+        const select = document.getElementById('degreeSelect');
+        data.forEach(degree => {
+            let option = document.createElement('option');
+            option.value = degree.name;
+            option.textContent = `${degree.name} (${degree.level})`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Failed to fetch degrees:', error);
+    }
+}
+
+async function fetchSections() {
+    const instructorId = document.getElementById('instructorSelect').value;
+    const degreeName = document.getElementById('degreeSelect').value;
+    const semester = document.getElementById('semesterSelect').value;
+    const year = document.getElementById('yearInput').value;
+
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/sections-by-instructor-degree-semester/?instructor_id=${instructorId}&degree_name=${encodeURIComponent(degreeName)}&semester=${semester}&year=${year}`);
+        const sections = await response.json();
+        const container = document.getElementById('sectionsContainer');
+        container.innerHTML = ''; // Clear previous results
+        sections.forEach(section => {
+            let div = document.createElement('div');
+            div.textContent = `Section ${section.section_number}: ${section.course_name} - ${section.number_of_students} students`;
+            container.appendChild(div);
+        });
+    } catch (error) {
+        console.error('Failed to fetch sections:', error);
+    }
+}
+

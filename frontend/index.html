@@ -186,9 +186,27 @@
 	    </form>
 
     </div>
+    <div>
+        <h2>Fetch Sections by Instructor, Degree, and Semester</h2>
+        <select id="instructorSelect">
+            <!-- Instructors will be populated here -->
+        </select>
+        <select id="degreeSelect">
+            <!-- Degrees will be populated here -->
+        </select>
+        <select id="semesterSelect">
+            <option value="Spring">Spring</option>
+            <option value="Summer">Summer</option>
+            <option value="Fall">Fall</option>
+            <option value="Winter">Winter</option>
+        </select>
+        <input type="number" id="yearInput" placeholder="Year" required>
+        <button onclick="fetchSections()">Load Sections</button>
+    </div>
 
-
-
+    <div id="sectionsContainer">
+        <!-- Sections will be displayed here -->
+    </div>
 </body>
 </html>
 
