@@ -203,8 +203,11 @@ async function listLearningObjectives() {
 }
 
 async function associateCourseWithObjective() {
-    const course_number = document.getElementById('assocCourseNumber').value;
+    const course_number = document.getElementById('assocCourseNumber_Learning').value;
     const objective_code = document.getElementById('assocObjectiveCode').value;
+    
+    console.log('Course Number:', course_number); // Log course number
+    console.log('Objective Code:', objective_code); // Log objective code
 
     try {
         const response = await fetch('http://127.0.0.1:8000/associate-course-objective/', {
