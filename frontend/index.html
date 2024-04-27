@@ -143,6 +143,21 @@
 	    <div id="coursesByObjectiveDisplay"></div>
     </div>
 
+    <!-- Query Sections by Course and Semester-Year Range -->
+    <div>
+	    <h2>Query Sections by Course and Semester-Year Range</h2>
+	    <form id="querySectionsByCourseForm">
+		    <input type="text" id="courseNumberQuery" placeholder="Course Number" required>
+		    <input type="number" id="startYearQuery" placeholder="Start Year" required>
+		    <input type="text" id="startSemesterQuery" placeholder="Start Semester" required>
+		    <input type="number" id="endYearQuery" placeholder="End Year" required>
+		    <input type="text" id="endSemesterQuery" placeholder="End Semester" required>
+		    <button type="button" onclick="getSectionsByCourse()">Query Sections</button>
+	    </form>
+	    <div id="sectionsByCourseDisplay"></div>
+    </div>
+
+
 
 </body>
 </html>

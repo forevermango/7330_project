@@ -241,3 +241,25 @@ async function getCoursesByObjective() {
     }
 }
 
+async function getSectionsByCourse() {
+    const courseNumber = document.getElementById('courseNumberQuery').value;
+    const startYear = document.getElementById('startYearQuery').value;
+    const startSemester = document.getElementById('startSemesterQuery').value;
+    const endYear = document.getElementById('endYearQuery').value;
+    const endSemester = document.getElementById('endSemesterQuery').value;
+
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/sections-by-course/?course_number=${encodeURIComponent(courseNumber)}&start_year=${startYear}&start_semester=${encodeURIComponent(startSemester)}&end_year=${endYear}&end_semester=${encodeURIComponent(endSemester)}`, {
+            method: 'GET'
+        });
+        if (!response.ok) throw new Error('Failed to fetch sections. Status: ' + response.status);
+        const sections = await response.json();
+        const displayDiv = document.getElementById('sectionsByCourseDisplay');
+        displayDiv.innerHTML = '<h3>Sections:</h3>' + sections.map(section =>
+            `Section Number: ${section.section_number}, Students: ${section.number_of_students}, Instructor ID: ${section.instructor_id}, Course: ${section.course_number}, Year: ${section.year}, Semester: ${section.semester}`
+        ).join('<br>');
+    } catch (error) {
+        alert('Error fetching sections: ' + error.message);
+    }
+}
+
