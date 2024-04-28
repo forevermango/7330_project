@@ -82,6 +82,22 @@ class SectionEvaluation(BaseModel):
     instructor_id: Optional[int] = None
     evaluation: Optional[EvaluationData] = None
 
+class SectionEvaluationDetail(BaseModel):
+    section_number: int
+    course_number: str 
+    number_of_students: int 
+    year: int 
+    semester: str 
+    instructor_id: Optional[int] 
+    eval_ID: Optional[int]
+    objective_code: Optional[int]
+    eval_criteria: Optional[str]
+    eval_A_count: Optional[int]
+    eval_B_count: Optional[int]
+    eval_C_count: Optional[int]
+    eval_F_count: Optional[int]
+    improvements: Optional[str]
+
 class AvailableOptions(BaseModel):
     degrees: List[DegreeOption]
     semesters: List[str]

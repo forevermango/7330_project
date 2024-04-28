@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from models import (Degree, Course, Instructor, Section, LearningObjective, 
                     CourseObjectiveAssociation, CourseSectionAssociation, EvaluationData, 
                     SectionDetails, DegreeOption, InstructorOption, SemesterOption, CourseResponse,
-                    SectionEvaluation, AssociateCourseWithDegree)
+                    SectionEvaluation, SectionEvaluationDetail, AssociateCourseWithDegree)
 from database import get_db_connection, add_entity
 from typing import List
 
@@ -38,10 +38,6 @@ async def add_section(section: Section):
 async def add_learning_objective(learning_objective: LearningObjective):
     return await add_entity(learning_objective, "learning_objectives", ("code", "title", "description"))
 
-@router.post("/associate-course-objective/", status_code=201, summary="Associate a course with a learning objective", response_description="Association created successfully")
-async def associate_course_objective(association: CourseObjectiveAssociation):
-    return await add_entity(association, "course_learning_objectives", ("course_number", "objective_code"))
-
 @router.post("/associate-course-section/", status_code=201, summary="Associate a course with a section for a specific semester", response_description="Association created successfully")
 async def associate_course_section(association: CourseSectionAssociation):
     return await add_entity(association, "sections_courses", ("course_number", "section_number", "semester_year"))
@@ -65,37 +61,6 @@ async def add_entity(entity, table, columns):
         raise HTTPException(status_code=400, detail=str(error))
     finally:
         conn.close()
-
-@router.post("/update-evaluation/", response_model=dict)
-async def update_evaluation(eval_data: EvaluationData):
-    conn = get_db_connection()
-    if not conn:
-        raise HTTPException(status_code=500, detail="Failed to connect to the database")
-    
-    try:
-        # Check if the objective code exists
-        cursor = conn.cursor()
-        cursor.execute("SELECT code FROM learning_objectives WHERE code = %s", (eval_data.objective_code,))
-        objective = cursor.fetchone()
-        if not objective:
-            raise HTTPException(status_code=400, detail="Invalid objective code")
-
-        # Proceed with the rest of your logic
-        cursor.execute("""
-            INSERT INTO course_evaluations (
-                section_ID, objective_code, eval_criteria, eval_A_count, eval_B_count, eval_C_count, eval_F_count, improvements)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE
-                objective_code=VALUES(objective_code), eval_criteria=VALUES(eval_criteria), eval_A_count=VALUES(eval_A_count), 
-                eval_B_count=VALUES(eval_B_count), eval_C_count=VALUES(eval_C_count), eval_F_count=VALUES(eval_F_count), 
-                improvements=VALUES(improvements);
-        """, (eval_data.section_ID, eval_data.objective_code, eval_data.eval_criteria, eval_data.eval_A_count, eval_data.eval_B_count, 
-              eval_data.eval_C_count, eval_data.eval_F_count, eval_data.improvements))
-        conn.commit()
-        return {"status": "Evaluation updated successfully"}
-    finally:
-        if conn.is_connected():
-            conn.close()
 
 @router.post("/associate-course-with-degree/", status_code=201, summary="Associate a course with a degree", response_description="Course associated with degree successfully")
 async def associate_course_with_degree(association: AssociateCourseWithDegree):
@@ -293,30 +258,6 @@ async def get_instructor_sections(instructor_id: int, degree_name: str, year: in
             conn.close()
 
 
-@router.get("/sections-with-evaluations/", response_model=List[SectionEvaluation])
-async def get_sections_with_evaluations(instructor_id: int, degree_name: str, year: int, semester: str):
-    conn = get_db_connection()
-    if not conn:
-        raise HTTPException(status_code=500, detail="Failed to connect to the database")
-    
-    try:
-        with conn.cursor(dictionary=True) as cursor:
-            query = """
-            SELECT s.section_number, s.course_number, s.number_of_students, s.year, s.semester,
-                   e.eval_ID, e.eval_criteria, e.eval_A_count, e.eval_B_count, e.eval_C_count, e.eval_F_count, e.improvements
-            FROM sections s
-            LEFT JOIN course_evaluations e ON s.section_number = e.section_ID
-            JOIN degree_courses dc ON s.course_number = dc.course_number
-            WHERE s.instructor_id = %s AND dc.degree_name = %s AND s.year = %s AND s.semester = %s
-            ORDER BY s.year, s.semester;
-            """
-            cursor.execute(query, (instructor_id, degree_name, year, semester))
-            sections = cursor.fetchall()
-            return sections
-    finally:
-        if conn.is_connected():
-            conn.close()
-
 @router.get("/degrees/", response_model=List[DegreeOption])
 async def list_degrees():
     conn = get_db_connection()
@@ -354,7 +295,7 @@ async def list_semesters():
             conn.close()
 
 
-@router.get("/sections-by-instructor-degree-semester/", response_model=List[SectionDetails])
+@router.get("/sections-by-instructor-degree-semester/", response_model=List[SectionEvaluationDetail])
 async def get_sections_by_instructor_degree_semester(instructor_id: int, degree_name: str, degree_level: str, semester: str, year: int):
     conn = get_db_connection()
     if not conn:
@@ -363,7 +304,7 @@ async def get_sections_by_instructor_degree_semester(instructor_id: int, degree_
     try:
         cursor = conn.cursor(dictionary=True)
         query = """
-        SELECT s.section_number, s.course_number, s.number_of_students, c.name AS course_name, s.year, s.semester,
+        SELECT s.section_number, s.course_number, s.number_of_students, s.year, s.semester, s.instructor_id,
                e.eval_ID, e.objective_code, e.eval_criteria, e.eval_A_count, e.eval_B_count, e.eval_C_count, e.eval_F_count, e.improvements
         FROM sections s
         JOIN courses c ON s.course_number = c.course_number
@@ -374,12 +315,10 @@ async def get_sections_by_instructor_degree_semester(instructor_id: int, degree_
         """
         cursor.execute(query, (instructor_id, degree_name, degree_level, semester, year))
         sections = cursor.fetchall()
-        return [SectionDetails(**section) for section in sections]
+        return [SectionEvaluationDetail(**section) for section in sections]
     finally:
         if conn.is_connected():
             conn.close()
-
-
 
 @router.get("/sections-with-evaluations/", response_model=List[SectionEvaluation])
 async def get_sections_with_evaluations(instructor_id: int, degree_name: str, degree_level: str, year: int, semester: str):
