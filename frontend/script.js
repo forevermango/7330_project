@@ -412,12 +412,18 @@ async function fetchDegrees() {
 async function fetchSections() {
     const instructorId = document.getElementById('instructorSelect').value;
     const degreeName = document.getElementById('degreeSelect').value;
-    const degreeLevel = document.getElementById('degreeLevelSelect').value; // Ensure you have a selector for degree level
+    const degreeLevel = document.getElementById('degreeLevelSelect').value;
     const semester = document.getElementById('semesterSelect').value;
     const year = document.getElementById('yearInput').value;
 
+    // Validate inputs
+    if (!instructorId || !degreeName || !degreeLevel || !year) {
+        console.log('Some fields are missing values, not fetching sections.');
+        return;  // Exit the function if any field is empty
+    }
+
     try {
-        const response = await fetch(`http://127.0.0.1:8000/sections-by-instructor-degree-semester/?instructor_id=${instructorId}&degree_name=${encodeURIComponent(degreeName)}&degree_level=${encodeURIComponent(degreeLevel)}&semester=${semester}&year=${year}`);
+        const response = await fetch(`http://127.0.0.1:8000/sections-by-instructor-degree-semester/?instructor_id=${encodeURIComponent(instructorId)}&degree_name=${encodeURIComponent(degreeName)}&degree_level=${encodeURIComponent(degreeLevel)}&semester=${encodeURIComponent(semester)}&year=${year}`);
         if (!response.ok) throw new Error('Failed to fetch sections');
         const sections = await response.json();
         displaySections(sections);
@@ -447,16 +453,17 @@ function displaySections(sections) {
 function setupEvaluationForm(sectionNumber, courseNumber, evaluation) {
     const form = document.getElementById('evaluationForm');
     form.sectionID.value = sectionNumber;
-    // Populate form fields if evaluation exists, otherwise clear them
-    if (evaluation) {
-        form.objectiveCode_EvalQuery.value = evaluation.objective_code;
-        form.evalCriteria.value = evaluation.eval_criteria;
-        form.evalACount.value = evaluation.eval_A_count;
-        form.evalBCount.value = evaluation.eval_B_count;
-        form.evalCCount.value = evaluation.eval_C_count;
-        form.evalFCount.value = evaluation.eval_F_count;
-        form.improvements.value = evaluation.improvements;
+    if (evaluation && evaluation.eval_ID) {
+        // Populate form fields if evaluation exists
+        form.objectiveCode_EvalQuery.value = evaluation.objective_code || '';
+        form.evalCriteria.value = evaluation.eval_criteria || '';
+        form.evalACount.value = evaluation.eval_A_count || '';
+        form.evalBCount.value = evaluation.eval_B_count || '';
+        form.evalCCount.value = evaluation.eval_C_count || '';
+        form.evalFCount.value = evaluation.eval_F_count || '';
+        form.improvements.value = evaluation.improvements || '';
     } else {
+        // Clear the form for a new evaluation
         form.objectiveCode_EvalQuery.value = '';
         form.evalCriteria.value = '';
         form.evalACount.value = '';
@@ -466,6 +473,7 @@ function setupEvaluationForm(sectionNumber, courseNumber, evaluation) {
         form.improvements.value = '';
     }
 }
+
 
 async function submitEvaluation() {
     const sectionID = document.getElementById('sectionID').value;
@@ -515,3 +523,21 @@ document.addEventListener("DOMContentLoaded", function() {
     fetchSections();  // Initial fetch to load data
 });
 
+async function fetchLearningObjectives() {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/learning-objectives/');
+        const objectives = await response.json();
+        const select = document.getElementById('objectiveCode_EvalQuery'); // Assuming this is your select element ID
+        select.innerHTML = ''; // Clear existing options
+        objectives.forEach(objective => {
+            let option = document.createElement('option');
+            option.value = objective.code;
+            option.textContent = `${objective.title} (${objective.code})`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Failed to load learning objectives:', error);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", fetchLearningObjectives);
