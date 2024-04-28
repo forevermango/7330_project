@@ -419,6 +419,7 @@ function showEvaluationForm(sectionNumber, hasEvaluation) {
     const formContainer = document.getElementById('evaluationFormContainer');
     formContainer.style.display = 'block';  // Show the form
     const form = document.getElementById('evaluationForm');
+    const objectiveInput = document.getElementById('objectiveCode_EvalQuery');
 
     // Clear the form first
     form.reset();
@@ -426,9 +427,11 @@ function showEvaluationForm(sectionNumber, hasEvaluation) {
 
     if (hasEvaluation) {
         loadEvaluationData(sectionNumber);  // Load data if updating
+        objectiveInput.setAttribute('readonly', true);  // Make objective code immutable
     } else {
         // Clear the form for a new evaluation
-        document.getElementById('objectiveCode_EvalQuery').value = '';
+        objectiveInput.value = '';
+        objectiveInput.removeAttribute('readonly');  // Allow editing of objective code
         document.getElementById('evalCriteria').value = '';
         document.getElementById('evalACount').value = '';
         document.getElementById('evalBCount').value = '';
@@ -437,6 +440,7 @@ function showEvaluationForm(sectionNumber, hasEvaluation) {
         document.getElementById('improvements').value = '';
     }
 }
+
 
 async function loadEvaluationData(sectionNumber) {
     try {

@@ -410,3 +410,26 @@ async def update_evaluation(eval_data: EvaluationData):
     finally:
         if conn.is_connected():
             conn.close()
+
+@router.get("/get-evaluation/{section_id}", response_model=EvaluationData)
+async def get_evaluation(section_id: int):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+    
+    try:
+        cursor = conn.cursor(dictionary=True)
+        query = """
+        SELECT section_ID, objective_code, eval_criteria, eval_A_count, eval_B_count, eval_C_count, eval_F_count, improvements
+        FROM course_evaluations
+        WHERE section_ID = %s;
+        """
+        cursor.execute(query, (section_id,))
+        evaluation = cursor.fetchone()
+        if evaluation:
+            return evaluation
+        else:
+            raise HTTPException(status_code=404, detail="Evaluation not found")
+    finally:
+        conn.close()
+
