@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, constr
 import mysql.connector
 import os
-from typing import List
+from typing import List, Optional
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -143,9 +143,12 @@ class AvailableOptions(BaseModel):
 
 class SectionDetails(BaseModel):
     section_number: int
-    course_name: str
     course_number: str
     number_of_students: int
+    year: int
+    semester: str
+    course_name: str
+    has_evaluation: bool  # This field indicates if there's an evaluation or not
 
 class EvaluationData(BaseModel):
     section_ID: int
@@ -436,8 +439,8 @@ class SectionEvaluation(BaseModel):
     number_of_students: int
     year: int
     semester: str
-    instructor_id: int
-    evaluation: EvaluationData = None
+    instructor_id: Optional[int] = None
+    evaluation: Optional[EvaluationData] = None
 
 
 @app.get("/instructor-sections/", response_model=List[SectionEvaluation])
@@ -569,8 +572,9 @@ async def list_semesters():
         if conn.is_connected():
             conn.close()
 
+
 @app.get("/sections-by-instructor-degree-semester/", response_model=List[SectionDetails])
-async def get_sections_by_instructor_degree_semester(instructor_id: int, degree_name: str, semester: str, year: int):
+async def get_sections_by_instructor_degree_semester(instructor_id: int, degree_name: str, degree_level: str, semester: str, year: int):
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Failed to connect to the database")
@@ -578,18 +582,68 @@ async def get_sections_by_instructor_degree_semester(instructor_id: int, degree_
     try:
         cursor = conn.cursor(dictionary=True)
         query = """
-        SELECT s.section_number, s.course_number, s.number_of_students, c.name AS course_name, s.year, s.semester
+        SELECT s.section_number, s.course_number, s.number_of_students, c.name AS course_name, s.year, s.semester,
+               CASE WHEN e.eval_ID IS NOT NULL THEN TRUE ELSE FALSE END AS has_evaluation
         FROM sections s
         JOIN courses c ON s.course_number = c.course_number
         JOIN degree_courses dc ON c.course_number = dc.course_number
-        WHERE s.instructor_id = %s AND dc.degree_name = %s AND s.semester = %s AND s.year = %s
+        LEFT JOIN course_evaluations e ON s.section_number = e.section_ID
+        WHERE s.instructor_id = %s AND dc.degree_name = %s AND dc.degree_level = %s AND s.semester = %s AND s.year = %s
         ORDER BY s.section_number;
         """
-        cursor.execute(query, (instructor_id, degree_name, semester, year))
+        cursor.execute(query, (instructor_id, degree_name, degree_level, semester, year))
         sections = cursor.fetchall()
         return [SectionDetails(section_number=section['section_number'], course_name=section['course_name'], 
                                course_number=section['course_number'], number_of_students=section['number_of_students'],
-                               year=section['year'], semester=section['semester']) for section in sections]
+                               year=section['year'], semester=section['semester'], has_evaluation=section['has_evaluation'])
+                for section in sections]
+    finally:
+        if conn.is_connected():
+            conn.close()
+
+
+
+@app.get("/sections-with-evaluations/", response_model=List[SectionEvaluation])
+async def get_sections_with_evaluations(instructor_id: int, degree_name: str, degree_level: str, year: int, semester: str):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+    
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            query = """
+            SELECT s.section_number, s.course_number, s.number_of_students, s.year, s.semester,
+                   s.instructor_id, e.eval_ID, e.eval_criteria, e.eval_A_count, e.eval_B_count, 
+                   e.eval_C_count, e.eval_F_count, e.improvements
+            FROM sections s
+            LEFT JOIN course_evaluations e ON s.section_number = e.section_ID
+            JOIN degree_courses dc ON s.course_number = dc.course_number
+            WHERE s.instructor_id = %s AND dc.degree_name = %s AND dc.degree_level = %s 
+                  AND s.year = %s AND s.semester = %s
+            ORDER BY s.course_number;
+            """
+            cursor.execute(query, (instructor_id, degree_name, degree_level, year, semester))
+            sections = []
+            for row in cursor.fetchall():
+                evaluation = {
+                    'objective_code': row['eval_ID'],
+                    'eval_criteria': row['eval_criteria'],
+                    'eval_A_count': row['eval_A_count'],
+                    'eval_B_count': row['eval_B_count'],
+                    'eval_C_count': row['eval_C_count'],
+                    'eval_F_count': row['eval_F_count'],
+                    'improvements': row['improvements']
+                } if row['eval_ID'] else None
+                sections.append({
+                    'section_number': row['section_number'],
+                    'course_number': row['course_number'],
+                    'number_of_students': row['number_of_students'],
+                    'year': row['year'],
+                    'semester': row['semester'],
+                    'instructor_id': row['instructor_id'],
+                    'evaluation': evaluation
+                })
+            return sections
     finally:
         if conn.is_connected():
             conn.close()

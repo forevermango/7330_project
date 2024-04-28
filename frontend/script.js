@@ -375,36 +375,143 @@ async function fetchDegrees() {
     try {
         const response = await fetch('http://127.0.0.1:8000/degrees/');
         const data = await response.json();
-        const select = document.getElementById('degreeSelect');
+        const degreeSelect = document.getElementById('degreeSelect');
+        const degreeLevelSelect = document.getElementById('degreeLevelSelect');
+
+        // Clear previous options
+        degreeSelect.innerHTML = '';
+        degreeLevelSelect.innerHTML = '';
+
+        // To store unique degree levels
+        const degreeLevels = new Set();
+
         data.forEach(degree => {
+            // Populate degree names
             let option = document.createElement('option');
             option.value = degree.name;
-            option.textContent = `${degree.name} (${degree.level})`;
-            select.appendChild(option);
+            option.textContent = degree.name;
+            degreeSelect.appendChild(option);
+
+            // Collect degree levels
+            degreeLevels.add(degree.level);
+        });
+
+        // Populate degree levels
+        degreeLevels.forEach(level => {
+            let levelOption = document.createElement('option');
+            levelOption.value = level;
+            levelOption.textContent = level;
+            degreeLevelSelect.appendChild(levelOption);
         });
     } catch (error) {
         console.error('Failed to fetch degrees:', error);
     }
 }
 
+
 async function fetchSections() {
     const instructorId = document.getElementById('instructorSelect').value;
     const degreeName = document.getElementById('degreeSelect').value;
+    const degreeLevel = document.getElementById('degreeLevelSelect').value; // Ensure you have a selector for degree level
     const semester = document.getElementById('semesterSelect').value;
     const year = document.getElementById('yearInput').value;
 
     try {
-        const response = await fetch(`http://127.0.0.1:8000/sections-by-instructor-degree-semester/?instructor_id=${instructorId}&degree_name=${encodeURIComponent(degreeName)}&semester=${semester}&year=${year}`);
+        const response = await fetch(`http://127.0.0.1:8000/sections-by-instructor-degree-semester/?instructor_id=${instructorId}&degree_name=${encodeURIComponent(degreeName)}&degree_level=${encodeURIComponent(degreeLevel)}&semester=${semester}&year=${year}`);
+        if (!response.ok) throw new Error('Failed to fetch sections');
         const sections = await response.json();
-        const container = document.getElementById('sectionsContainer');
-        container.innerHTML = ''; // Clear previous results
-        sections.forEach(section => {
-            let div = document.createElement('div');
-            div.textContent = `Section ${section.section_number}: ${section.course_name} - ${section.number_of_students} students`;
-            container.appendChild(div);
-        });
+        displaySections(sections);
     } catch (error) {
-        console.error('Failed to fetch sections:', error);
+        console.error('Failed to load sections:', error);
     }
 }
+
+function displaySections(sections) {
+    const container = document.getElementById('sectionsContainer');
+    container.innerHTML = '';  // Clear previous results
+    sections.forEach(section => {
+        const div = document.createElement('div');
+        const status = section.has_evaluation ? 'Evaluation entered' : 'No evaluation yet';
+        div.innerHTML = `Section ${section.section_number}: ${section.course_name} (${section.course_number}) - ${status}`;
+        const button = document.createElement('button');
+        button.textContent = section.has_evaluation ? 'Update Evaluation' : 'Add Evaluation';
+        button.onclick = () => {
+            setupEvaluationForm(section.section_number, section.course_number, section.has_evaluation);
+        };
+        div.appendChild(button);
+        container.appendChild(div);
+    });
+}
+
+
+function setupEvaluationForm(sectionNumber, courseNumber, evaluation) {
+    const form = document.getElementById('evaluationForm');
+    form.sectionID.value = sectionNumber;
+    // Populate form fields if evaluation exists, otherwise clear them
+    if (evaluation) {
+        form.objectiveCode_EvalQuery.value = evaluation.objective_code;
+        form.evalCriteria.value = evaluation.eval_criteria;
+        form.evalACount.value = evaluation.eval_A_count;
+        form.evalBCount.value = evaluation.eval_B_count;
+        form.evalCCount.value = evaluation.eval_C_count;
+        form.evalFCount.value = evaluation.eval_F_count;
+        form.improvements.value = evaluation.improvements;
+    } else {
+        form.objectiveCode_EvalQuery.value = '';
+        form.evalCriteria.value = '';
+        form.evalACount.value = '';
+        form.evalBCount.value = '';
+        form.evalCCount.value = '';
+        form.evalFCount.value = '';
+        form.improvements.value = '';
+    }
+}
+
+async function submitEvaluation() {
+    const sectionID = document.getElementById('sectionID').value;
+    const objectiveCode = document.getElementById('objectiveCode_EvalQuery').value;
+    const evalCriteria = document.getElementById('evalCriteria').value;
+    const evalACount = document.getElementById('evalACount').value;
+    const evalBCount = document.getElementById('evalBCount').value;
+    const evalCCount = document.getElementById('evalCCount').value;
+    const evalFCount = document.getElementById('evalFCount').value;
+    const improvements = document.getElementById('improvements').value;
+
+    const evalData = {
+        section_ID: sectionID,
+        objective_code: objectiveCode,
+        eval_criteria: evalCriteria,
+        eval_A_count: evalACount,
+        eval_B_count: evalBCount,
+        eval_C_count: evalCCount,
+        eval_F_count: evalFCount,
+        improvements: improvements
+    };
+
+    try {
+        const response = await fetch('http://127.0.0.1:8000/update-evaluation/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(evalData)
+        });
+
+        if (!response.ok) {
+            const message = `An error has occured: ${response.status}`;
+            throw new Error(message);
+        }
+
+        const result = await response.json();
+        alert('Evaluation Submitted Successfully: ' + JSON.stringify(result));
+        fetchSections();  // Refresh the section list to update the evaluation status
+    } catch (error) {
+        console.error('Error during evaluation submission:', error);
+        alert('Failed to submit evaluation: ' + error.message);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    fetchSections();  // Initial fetch to load data
+});
 

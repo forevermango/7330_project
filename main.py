@@ -141,19 +141,21 @@ try:
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS course_evaluations (
-              eval_ID INT AUTO_INCREMENT PRIMARY KEY,
-              section_ID INT,
-              objective_code INT,
-              eval_criteria VARCHAR(255),
-              eval_A_count INT,
-              eval_B_count INT,
-              eval_C_count INT,
-              eval_F_count INT,
-              improvements TEXT,
-              FOREIGN KEY (section_ID) REFERENCES sections (section_number),
-              FOREIGN KEY (objective_code) REFERENCES learning_objectives (code)
+                eval_ID INT AUTO_INCREMENT PRIMARY KEY,
+                section_ID INT,
+                objective_code INT,
+                eval_criteria VARCHAR(255),
+                eval_A_count INT,
+                eval_B_count INT,
+                eval_C_count INT,
+                eval_F_count INT,
+                improvements TEXT,
+                FOREIGN KEY (section_ID) REFERENCES sections (section_number),
+                FOREIGN KEY (objective_code) REFERENCES learning_objectives (code),
+                UNIQUE KEY section_objective_unique (section_ID, objective_code)
             )
         ''')
+
 
         cursor.execute('''
           CREATE TABLE IF NOT EXISTS course_learning_objectives(
