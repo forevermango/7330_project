@@ -528,6 +528,14 @@ async function submitEvaluation() {
     }
 }
 
+function hideEvaluationForm() {
+    const formContainer = document.getElementById('evaluationFormContainer');
+    formContainer.style.display = 'none';  // Hide the form
+    // Optionally, you might want to reset the form here if that's desired behavior
+    document.getElementById('evaluationForm').reset();
+}
+
+
 async function fetchLearningObjectives() {
     try {
         const response = await fetch('http://127.0.0.1:8000/learning-objectives/');
