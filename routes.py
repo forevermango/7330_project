@@ -304,14 +304,14 @@ async def get_sections_by_instructor_degree_semester(instructor_id: int, degree_
     try:
         cursor = conn.cursor(dictionary=True)
         query = """
-        SELECT s.section_number, s.course_number, s.number_of_students, s.year, s.semester, s.instructor_id,
-               e.eval_ID, e.objective_code, e.eval_criteria, e.eval_A_count, e.eval_B_count, e.eval_C_count, e.eval_F_count, e.improvements
-        FROM sections s
-        JOIN courses c ON s.course_number = c.course_number
-        JOIN degree_courses dc ON c.course_number = dc.course_number
-        LEFT JOIN course_evaluations e ON s.section_number = e.section_ID
-        WHERE s.instructor_id = %s AND dc.degree_name = %s AND dc.degree_level = %s AND s.semester = %s AND s.year = %s
-        ORDER BY s.section_number;
+            SELECT s.section_number, s.course_number, c.name AS course_name, s.number_of_students, s.year, s.semester, s.instructor_id,
+                   e.eval_ID, e.objective_code, e.eval_criteria, e.eval_A_count, e.eval_B_count, e.eval_C_count, e.eval_F_count, e.improvements
+            FROM sections s
+            JOIN courses c ON s.course_number = c.course_number
+            JOIN degree_courses dc ON c.course_number = dc.course_number
+            LEFT JOIN course_evaluations e ON s.section_number = e.section_ID
+            WHERE s.instructor_id = %s AND dc.degree_name = %s AND dc.degree_level = %s AND s.semester = %s AND s.year = %s
+            ORDER BY s.section_number;
         """
         cursor.execute(query, (instructor_id, degree_name, degree_level, semester, year))
         sections = cursor.fetchall()

@@ -84,7 +84,8 @@ class SectionEvaluation(BaseModel):
 
 class SectionEvaluationDetail(BaseModel):
     section_number: int
-    course_number: str 
+    course_number: str
+    course_name: str
     number_of_students: int 
     year: int 
     semester: str 

@@ -387,14 +387,9 @@ async function fetchSections() {
     const semester = document.getElementById('semesterSelect').value;
     const year = document.getElementById('yearInput').value;
 
-    // Validate inputs
-    if (!instructorId || !degreeName || !degreeLevel || !year) {
-        console.log('Some fields are missing values, not fetching sections.');
-        return;  // Exit the function if any field is empty
-    }
-
     try {
-        const response = await fetch(`http://127.0.0.1:8000/sections-by-instructor-degree-semester/?instructor_id=${encodeURIComponent(instructorId)}&degree_name=${encodeURIComponent(degreeName)}&degree_level=${encodeURIComponent(degreeLevel)}&semester=${encodeURIComponent(semester)}&year=${year}`);
+        const url = `http://127.0.0.1:8000/sections-by-instructor-degree-semester/?instructor_id=${instructorId}&degree_name=${degreeName}&degree_level=${degreeLevel}&semester=${semester}&year=${year}`;
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch sections');
         const sections = await response.json();
         displaySections(sections);
@@ -405,20 +400,57 @@ async function fetchSections() {
 
 function displaySections(sections) {
     const container = document.getElementById('sectionsContainer');
-    container.innerHTML = '';  // Clear previous results
-    sections.forEach(section => {
-        const div = document.createElement('div');
-        const status = section.has_evaluation ? 'Evaluation entered' : 'No evaluation yet';
-        div.innerHTML = `Section ${section.section_number}: ${section.course_name} (${section.course_number}) - ${status}`;
-        const button = document.createElement('button');
-        button.textContent = section.has_evaluation ? 'Update Evaluation' : 'Add Evaluation';
-        button.onclick = () => {
-            showEvaluationForm(section.section_number, section.has_evaluation);
-        };
-        div.appendChild(button);
-        container.appendChild(div);
-    });
+    container.innerHTML = sections.map(section => `
+        <div>
+            Section ${section.section_number}: ${section.course_name} (${section.course_number}) - 
+            ${section.evaluation ? 'Evaluation entered' : 'No evaluation yet'}
+            <button onclick="showEvaluationForm(${section.section_number}, ${Boolean(section.evaluation)})">
+                ${section.evaluation ? 'Update Evaluation' : 'Add Evaluation'}
+            </button>
+        </div>
+    `).join('');
 }
+
+
+function showEvaluationForm(sectionNumber, hasEvaluation) {
+    const formContainer = document.getElementById('evaluationFormContainer');
+    formContainer.style.display = 'block';
+    const form = document.getElementById('evaluationForm');
+    form.reset();
+    document.getElementById('sectionID').value = sectionNumber;
+
+    if (hasEvaluation) {
+        loadEvaluationData(sectionNumber);
+    }
+}
+
+function hideEvaluationForm() {
+    document.getElementById('evaluationFormContainer').style.display = 'none';
+}
+
+async function loadEvaluationData(sectionNumber) {
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/get-evaluation/${sectionNumber}`);
+        const data = await response.json();
+        // Populate form fields with fetched data
+        document.getElementById('objectiveCode_EvalQuery').value = data.objective_code || '';
+        document.getElementById('evalCriteria').value = data.eval_criteria || '';
+        document.getElementById('evalACount').value = data.eval_A_count || '';
+        document.getElementById('evalBCount').value = data.eval_B_count || '';
+        document.getElementById('evalCCount').value = data.eval_C_count || '';
+        document.getElementById('evalFCount').value = data.eval_F_count || '';
+        document.getElementById('improvements').value = data.improvements || '';
+    } catch (error) {
+        console.error('Error loading evaluation data:', error);
+        alert('Error loading evaluation data.');
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetchSections(); // Initial fetch to load data
+});
+
+
 
 function setupEvaluationForm(sectionNumber, courseNumber, evaluation) {
     const form = document.getElementById('evaluationForm');
@@ -489,10 +521,6 @@ async function submitEvaluation() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function() {
-    fetchSections();  // Initial fetch to load data
-});
-
 async function fetchLearningObjectives() {
     try {
         const response = await fetch('http://127.0.0.1:8000/learning-objectives/');
@@ -513,36 +541,4 @@ async function fetchLearningObjectives() {
 document.addEventListener("DOMContentLoaded", fetchLearningObjectives);
 
 
-function showEvaluationForm(sectionNumber, hasEvaluation = false) {
-    const formContainer = document.getElementById('evaluationFormContainer');
-    formContainer.style.display = 'block';  // Show the form
-    const form = document.getElementById('evaluationForm');
-
-    // Clear the form first
-    form.reset();
-    document.getElementById('sectionID').value = sectionNumber;
-
-    if (hasEvaluation) {
-        loadEvaluationData(sectionNumber);  // Load data if updating
-    }
-}
-
-
-function hideEvaluationForm() {
-    document.getElementById('evaluationFormContainer').style.display = 'none';  // Hide the form
-}
-
-async function loadEvaluationData(sectionNumber) {
-    try {
-        const response = await fetch(`http://127.0.0.1:8000/get-evaluation/${sectionNumber}`);
-        const data = await response.json();
-        // Populate form fields with fetched data
-        document.getElementById('objectiveCode_EvalQuery').value = data.objective_code || '';
-        document.getElementById('evalCriteria').value = data.eval_criteria || '';
-        // More fields to populate...
-    } catch (error) {
-        console.error('Error loading evaluation data:', error);
-        alert('Error loading evaluation data.');
-    }
-}
 
