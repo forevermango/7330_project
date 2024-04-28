@@ -400,56 +400,63 @@ async function fetchSections() {
 
 function displaySections(sections) {
     const container = document.getElementById('sectionsContainer');
-    container.innerHTML = sections.map(section => `
-        <div>
-            Section ${section.section_number}: ${section.course_name} (${section.course_number}) - 
-            ${section.evaluation ? 'Evaluation entered' : 'No evaluation yet'}
-            <button onclick="showEvaluationForm(${section.section_number}, ${Boolean(section.evaluation)})">
-                ${section.evaluation ? 'Update Evaluation' : 'Add Evaluation'}
-            </button>
-        </div>
-    `).join('');
+    container.innerHTML = sections.map(section => {
+        // Check if there's an existing evaluation by checking if any key evaluation data is not null
+        const hasEvaluation = section.eval_ID !== null;  // or another significant field that indicates evaluation existence
+        return `
+            <div>
+                Section ${section.section_number}: ${section.course_name || 'Course name missing'} (${section.course_number}) - 
+                ${hasEvaluation ? 'Evaluation entered' : 'No evaluation yet'}
+                <button onclick="showEvaluationForm(${section.section_number}, ${hasEvaluation})">
+                    ${hasEvaluation ? 'Update Evaluation' : 'Add Evaluation'}
+                </button>
+            </div>
+        `;
+    }).join('');
 }
-
 
 function showEvaluationForm(sectionNumber, hasEvaluation) {
     const formContainer = document.getElementById('evaluationFormContainer');
-    formContainer.style.display = 'block';
+    formContainer.style.display = 'block';  // Show the form
     const form = document.getElementById('evaluationForm');
+
+    // Clear the form first
     form.reset();
     document.getElementById('sectionID').value = sectionNumber;
 
     if (hasEvaluation) {
-        loadEvaluationData(sectionNumber);
+        loadEvaluationData(sectionNumber);  // Load data if updating
+    } else {
+        // Clear the form for a new evaluation
+        document.getElementById('objectiveCode_EvalQuery').value = '';
+        document.getElementById('evalCriteria').value = '';
+        document.getElementById('evalACount').value = '';
+        document.getElementById('evalBCount').value = '';
+        document.getElementById('evalCCount').value = '';
+        document.getElementById('evalFCount').value = '';
+        document.getElementById('improvements').value = '';
     }
-}
-
-function hideEvaluationForm() {
-    document.getElementById('evaluationFormContainer').style.display = 'none';
 }
 
 async function loadEvaluationData(sectionNumber) {
     try {
         const response = await fetch(`http://127.0.0.1:8000/get-evaluation/${sectionNumber}`);
         const data = await response.json();
-        // Populate form fields with fetched data
-        document.getElementById('objectiveCode_EvalQuery').value = data.objective_code || '';
-        document.getElementById('evalCriteria').value = data.eval_criteria || '';
-        document.getElementById('evalACount').value = data.eval_A_count || '';
-        document.getElementById('evalBCount').value = data.eval_B_count || '';
-        document.getElementById('evalCCount').value = data.eval_C_count || '';
-        document.getElementById('evalFCount').value = data.eval_F_count || '';
-        document.getElementById('improvements').value = data.improvements || '';
+        if (data) {
+            // Populate form fields with fetched data
+            document.getElementById('objectiveCode_EvalQuery').value = data.objective_code || '';
+            document.getElementById('evalCriteria').value = data.eval_criteria || '';
+            document.getElementById('evalACount').value = data.eval_A_count || '';
+            document.getElementById('evalBCount').value = data.eval_B_count || '';
+            document.getElementById('evalCCount').value = data.eval_C_count || '';
+            document.getElementById('evalFCount').value = data.eval_F_count || '';
+            document.getElementById('improvements').value = data.improvements || '';
+        }
     } catch (error) {
         console.error('Error loading evaluation data:', error);
         alert('Error loading evaluation data.');
     }
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-    fetchSections(); // Initial fetch to load data
-});
-
 
 
 function setupEvaluationForm(sectionNumber, courseNumber, evaluation) {
