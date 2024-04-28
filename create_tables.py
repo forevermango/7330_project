@@ -81,12 +81,6 @@ try:
             );
         ''')
 
-        # Insert semesters for Fall and Spring 2024
-        cursor.execute('''
-            INSERT INTO semesters (year, semester) VALUES (2024, 'Fall'), (2024, 'Spring')
-            ON DUPLICATE KEY UPDATE year=VALUES(year), semester=VALUES(semester)
-        ''')
-
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS instructors (
               instructor_id INT PRIMARY KEY,

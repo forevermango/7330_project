@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from models import (Degree, Course, Instructor, Section, LearningObjective, 
                     CourseObjectiveAssociation, CourseSectionAssociation, EvaluationData, 
-                    SectionDetails, DegreeOption, InstructorOption, SemesterOption, CourseResponse,
+                    SectionDetails, DegreeOption, InstructorOption, Semester, CourseResponse,
                     SectionEvaluation, SectionEvaluationDetail, AssociateCourseWithDegree)
 from database import get_db_connection, add_entity
 from typing import List
@@ -32,7 +32,24 @@ async def add_instructor(instructor: Instructor):
 
 @router.post("/add-section/", status_code=201, summary="Add a new section", response_description="Section added successfully")
 async def add_section(section: Section):
-    return await add_entity(section, "sections", ("section_number", "number_of_students", "instructor_id", "course_number", "year", "semester"))
+    conn = get_db_connection()
+    if conn is None:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+    
+    try:
+        # Check if the semester exists
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM semesters WHERE year = %s AND semester = %s", (section.year, section.semester))
+            result = cursor.fetchone()
+            if not result:
+                # Add the semester if it does not exist
+                await add_entity(Semester(year=section.year, semester=section.semester), "semesters", ("year", "semester"))
+        
+        # Now add the section
+        return await add_entity(section, "sections", ("section_number", "number_of_students", "instructor_id", "course_number", "year", "semester"))
+    finally:
+        if conn.is_connected():
+            conn.close()
 
 @router.post("/add-learning-objective/", status_code=201, summary="Add a new learning objective", response_description="Learning objective added successfully")
 async def add_learning_objective(learning_objective: LearningObjective):
@@ -282,7 +299,7 @@ async def list_instructors():
         if conn.is_connected():
             conn.close()
 
-@router.get("/semesters/", response_model=List[SemesterOption])
+@router.get("/semesters/", response_model=List[Semester])
 async def list_semesters():
     conn = get_db_connection()
     try:

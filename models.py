@@ -52,8 +52,9 @@ class DegreeOption(BaseModel):
     name: str
     level: str
 
-class SemesterOption(BaseModel):
-    semester_year: str
+class Semester(BaseModel):
+    year: int
+    semester: str
 
 class InstructorOption(BaseModel):
     id: int
