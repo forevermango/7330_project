@@ -190,9 +190,8 @@
 	    <!-- Sections will be displayed here -->
     </div>
 
-    <!-- Enter Course Evaluations -->
-    <div>
-	    <h2>Enter Course Evaluation</h2>
+    <div id="evaluationFormContainer" style="display: none;">
+	    <h2>Course Evaluation</h2>
 	    <form id="evaluationForm">
 		    <input type="hidden" id="sectionID" required>
 		    <input type="number" id="objectiveCode_EvalQuery" placeholder="Objective Code" required>
@@ -203,10 +202,12 @@
 		    <input type="number" id="evalFCount" placeholder="F Count" required>
 		    <textarea id="improvements" placeholder="Improvements" required></textarea>
 		    <button type="button" onclick="submitEvaluation()">Submit Evaluation</button>
+		    <button type="button" onclick="hideEvaluationForm()">Cancel</button>
 	    </form>
     </div>
 
- 
+
+
 </body>
 </html>
 

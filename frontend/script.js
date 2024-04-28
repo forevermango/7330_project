@@ -413,13 +413,12 @@ function displaySections(sections) {
         const button = document.createElement('button');
         button.textContent = section.has_evaluation ? 'Update Evaluation' : 'Add Evaluation';
         button.onclick = () => {
-            setupEvaluationForm(section.section_number, section.course_number, section.has_evaluation);
+            showEvaluationForm(section.section_number, section.has_evaluation);
         };
         div.appendChild(button);
         container.appendChild(div);
     });
 }
-
 
 function setupEvaluationForm(sectionNumber, courseNumber, evaluation) {
     const form = document.getElementById('evaluationForm');
@@ -512,3 +511,38 @@ async function fetchLearningObjectives() {
 }
 
 document.addEventListener("DOMContentLoaded", fetchLearningObjectives);
+
+
+function showEvaluationForm(sectionNumber, hasEvaluation = false) {
+    const formContainer = document.getElementById('evaluationFormContainer');
+    formContainer.style.display = 'block';  // Show the form
+    const form = document.getElementById('evaluationForm');
+
+    // Clear the form first
+    form.reset();
+    document.getElementById('sectionID').value = sectionNumber;
+
+    if (hasEvaluation) {
+        loadEvaluationData(sectionNumber);  // Load data if updating
+    }
+}
+
+
+function hideEvaluationForm() {
+    document.getElementById('evaluationFormContainer').style.display = 'none';  // Hide the form
+}
+
+async function loadEvaluationData(sectionNumber) {
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/get-evaluation/${sectionNumber}`);
+        const data = await response.json();
+        // Populate form fields with fetched data
+        document.getElementById('objectiveCode_EvalQuery').value = data.objective_code || '';
+        document.getElementById('evalCriteria').value = data.eval_criteria || '';
+        // More fields to populate...
+    } catch (error) {
+        console.error('Error loading evaluation data:', error);
+        alert('Error loading evaluation data.');
+    }
+}
+
