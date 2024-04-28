@@ -56,12 +56,12 @@ async function addInstructor() {
 }
 
 async function addSection() {
-    const number = document.getElementById('sectionNumber').value;
-    const students = document.getElementById('numberOfStudents').value;
-    const instructorId = document.getElementById('sectionInstructorId').value;
+    const number = parseInt(document.getElementById('sectionNumber').value);
+    const students = parseInt(document.getElementById('numberOfStudents').value);
+    const instructorId = parseInt(document.getElementById('sectionInstructorId').value);
     const courseNumber = document.getElementById('sectionCourseNumber').value;
     const semester = document.getElementById('sectionSemester').value;
-    const year = document.getElementById('sectionYear').value;
+    const year = parseInt(document.getElementById('sectionYear').value);
 
     try {
 	const response = await fetch('http://127.0.0.1:8000/add-section/', {
