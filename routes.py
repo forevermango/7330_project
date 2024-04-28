@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from models import (Degree, Course, Instructor, Section, LearningObjective, 
                     CourseObjectiveAssociation, CourseSectionAssociation, EvaluationData, 
                     SectionDetails, DegreeOption, InstructorOption, SemesterOption, CourseResponse,
-                    SectionEvaluation, AvailableOptions, AssociateCourseWithDegree)
+                    SectionEvaluation, AssociateCourseWithDegree)
 from database import get_db_connection, add_entity
 from typing import List
 
@@ -316,39 +316,6 @@ async def get_sections_with_evaluations(instructor_id: int, degree_name: str, ye
     finally:
         if conn.is_connected():
             conn.close()
-
-# Repeat similar structure for other endpoints
-
-@router.get("/available-options/", response_model=AvailableOptions)
-async def available_options():
-    conn = get_db_connection()
-    if not conn:
-        logging.error("Failed to connect to the database.")
-        raise HTTPException(status_code=500, detail="Database connection failed")
-    try:
-        cursor = conn.cursor(dictionary=True)  # Use dictionary cursor
-        logging.debug("Fetching degrees from database.")
-        cursor.execute("SELECT name, level FROM degrees")
-        degree_rows = cursor.fetchall()
-        degrees = [DegreeOption(name=row['name'], level=row['level']) for row in degree_rows]
-
-        logging.debug("Fetching semesters from database.")
-        cursor.execute("SELECT CONCAT(year, ' ', semester) AS semester_year FROM semesters ORDER BY year, semester")
-        semester_rows = cursor.fetchall()
-        semesters = [row['semester_year'] for row in semester_rows]
-
-        logging.debug("Fetching instructors from database.")
-        cursor.execute("SELECT instructor_id, name FROM instructors")
-        instructor_rows = cursor.fetchall()
-        instructors = [InstructorOption(id=row['instructor_id'], name=row['name']) for row in instructor_rows]
-
-        return AvailableOptions(degrees=degrees, semesters=semesters, instructors=instructors)
-    except Exception as e:
-        logging.error(f"Error processing available options: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
 
 @router.get("/degrees/", response_model=List[DegreeOption])
 async def list_degrees():

@@ -135,12 +135,6 @@ async def add_entity(entity, table, columns):
     finally:
         conn.close()
 
-# Define the Pydantic models for responses and request bodies
-class AvailableOptions(BaseModel):
-    degrees: List[tuple]
-    semesters: List[str]
-    instructors: List[tuple]
-
 class SectionDetails(BaseModel):
     section_number: int
     course_number: str

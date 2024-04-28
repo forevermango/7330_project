@@ -103,35 +103,6 @@ async function addLearningObjective() {
 }
 
 
-async function fetchAvailableOptions() {
-    try {
-        const response = await fetch('http://127.0.0.1:8000/available-options/');
-        if (!response.ok) throw new Error('Failed to load options. Status: ' + response.status);
-        const data = await response.json();
-
-        const optionsDisplay = document.getElementById('optionsDisplay');
-        optionsDisplay.innerHTML = ''; // Clear previous content
-
-        const degrees = document.createElement('div');
-        degrees.innerHTML = '<h3>Degrees:</h3>' + data.degrees.map(degree => `${degree.name} (${degree.level})`).join(', ');
-
-        const semesters = document.createElement('div');
-        semesters.innerHTML = '<h3>Semesters:</h3>' + data.semesters.join(', ');
-
-        const instructors = document.createElement('div');
-        instructors.innerHTML = '<h3>Instructors:</h3>' + data.instructors.map(instructor => `${instructor.name} (ID: ${instructor.id})`).join(', ');
-
-        optionsDisplay.appendChild(degrees);
-        optionsDisplay.appendChild(semesters);
-        optionsDisplay.appendChild(instructors);
-    } catch (error) {
-        console.error('Error loading options:', error);
-        alert('Error loading available options: ' + error);
-    }
-}
-
-
-
 async function associateCourseWithDegree() {
     const degree_name = document.getElementById('assocDegreeName').value;
     const degree_level = document.getElementById('assocDegreeLevel').value;
