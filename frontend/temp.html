@@ -5,68 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>University Program Evaluation System</title>
     <script src="script.js" defer></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-            line-height: 1.6;
-            padding: 20px;
-            margin: 0;
-        }
-        h1, h2 {
-            color: #222;
-        }
-        div {
-            background-color: #fff;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            margin-top: 8px;
-            margin-bottom: 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .scroll-button {
-            background-color: #444;
-            color: white;
-            border-radius: 50%;
-            padding: 8px 12px;
-            font-size: 14px;
-            position: fixed;
-            right: 20px;
-            cursor: pointer;
-        }
-        .to-top {
-            top: 20px;
-        }
-        .to-bottom {
-            bottom: 20px;
-        }
-    </style>
 </head>
 <body>
-    <button class="scroll-button to-bottom" onclick="window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'})">↓</button>
     <h1>University Program Evaluation System</h1>
 
     <!-- Degree Information Entry -->
@@ -102,17 +42,23 @@
 
     <!-- Section Information Entry -->
     <div>
-        <h2>Add New Section</h2>
-        <form id="newSectionForm">
-            <input type="number" id="sectionNumber" placeholder="Section Number" required>
-            <input type="number" id="numberOfStudents" placeholder="Number of Students" required>
-            <input type="number" id="sectionInstructorId" placeholder="Instructor ID" required>
-            <input type="text" id="sectionCourseNumber" placeholder="Course Number" required>
-            <input type="text" id="sectionSemester" placeholder="Semester" required>
-            <input type="text" id="sectionYear" placeholder="Year" required>
-            <button type="button" onclick="addSection()">Add Section</button>
-        </form>
+	    <h2>Add New Section</h2>
+	    <form id="newSectionForm">
+		    <input type="number" id="sectionNumber" placeholder="Section Number" required>
+		    <input type="number" id="numberOfStudents" placeholder="Number of Students" required>
+		    <input type="number" id="sectionInstructorId" placeholder="Instructor ID" required>
+		    <input type="text" id="sectionCourseNumber" placeholder="Course Number" required>
+		    <select id="sectionSemester" required>
+			    <option value="Winter">Winter</option>
+			    <option value="Spring">Spring</option>
+			    <option value="Summer">Summer</option>
+			    <option value="Fall">Fall</option>
+		    </select>
+		    <input type="text" id="sectionYear" placeholder="Year" required>
+		    <button type="button" onclick="addSection()">Add Section</button>
+	    </form>
     </div>
+
 
     <!-- Learning Objective Entry -->
     <div>
@@ -149,27 +95,28 @@
 	<div id="coursesList"></div>
     </div>
 
-    <!-- Section Query Entry -->
+    <!-- Query Sections by Course and Semester-Year Range -->
     <div>
-	    <h2>Query Sections by Semester Range</h2>
-	    <form id="querySectionsForm">
-		    <input type="number" id="startYear" placeholder="Start Year" required>
-		    <select id="startSemester" required>
+	    <h2>Query Sections by Course and Semester Range</h2>
+	    <form id="querySectionsByCourseForm">
+		    <input type="text" id="courseNumberQuery" placeholder="Course Number" required>
+		    <input type="number" id="startYearQuery" placeholder="Start Year" required>
+		    <select id="startSemesterQuery" required>
 			    <option value="Winter">Winter</option>
 			    <option value="Spring">Spring</option>
 			    <option value="Summer">Summer</option>
 			    <option value="Fall">Fall</option>
 		    </select>
-		    <input type="number" id="endYear" placeholder="End Year" required>
-		    <select id="endSemester" required>
+		    <input type="number" id="endYearQuery" placeholder="End Year" required>
+		    <select id="endSemesterQuery" required>
 			    <option value="Winter">Winter</option>
 			    <option value="Spring">Spring</option>
-			    <option value="Summer">Summer</option>
+			    <option value="Summer">Summer</option>
 			    <option value="Fall">Fall</option>
 		    </select>
-		    <button type="button" onclick="listSections()">Query Sections</button>
+		    <button type="button" onclick="getSectionsByCourse()">Query Sections</button>
 	    </form>
-	    <div id="sectionsDisplay"></div>
+	    <div id="sectionsByCourseDisplay"></div>
     </div>
 
     <!-- Learning Objectives Display -->
@@ -200,26 +147,48 @@
 
     <!-- Query Sections by Course and Semester-Year Range -->
     <div>
-	    <h2>Query Sections by Course and Semester-Year Range</h2>
+	    <h2>Query Sections by Course and Semester Range</h2>
 	    <form id="querySectionsByCourseForm">
 		    <input type="text" id="courseNumberQuery" placeholder="Course Number" required>
 		    <input type="number" id="startYearQuery" placeholder="Start Year" required>
-		    <input type="text" id="startSemesterQuery" placeholder="Start Semester" required>
+		    <select id="startSemesterQuery" required>
+			    <option value="Winter">Winter</option>
+			    <option value="Spring">Spring</option>
+			    <option value="Summer">Summer</option>
+			    <option value="Fall">Fall</option>
+		    </select>
 		    <input type="number" id="endYearQuery" placeholder="End Year" required>
-		    <input type="text" id="endSemesterQuery" placeholder="End Semester" required>
+		    <select id="endSemesterQuery" required>
+			    <option value="Winter">Winter</option>
+			    <option value="Spring">Spring</option>
+			    <option value="Summer">Summer</option>
+			    <option value="Fall">Fall</option>
+		    </select>
 		    <button type="button" onclick="getSectionsByCourse()">Query Sections</button>
 	    </form>
 	    <div id="sectionsByCourseDisplay"></div>
     </div>
+
+
     <!-- Query Sections by Instructor and Semester Range -->
     <div>
 	    <h2>Query Sections by Instructor and Semester Range</h2>
 	    <form id="querySectionsByInstructorForm">
 		    <input type="number" id="instructorIdQuery" placeholder="Instructor ID" required>
 		    <input type="number" id="instructorStartYearQuery" placeholder="Start Year" required>
-		    <input type="text" id="instructorStartSemesterQuery" placeholder="Start Semester" required>
+		    <select id="instructorStartSemesterQuery" required>
+			    <option value="Winter">Winter</option>
+			    <option value="Spring">Spring</option>
+			    <option value="Summer">Summer</option>
+			    <option value="Fall">Fall</option>
+		    </select>
 		    <input type="number" id="instructorEndYearQuery" placeholder="End Year" required>
-		    <input type="text" id="instructorEndSemesterQuery" placeholder="End Semester" required>
+		    <select id="instructorEndSemesterQuery" required>
+			    <option value="Winter">Winter</option>
+			    <option value="Spring">Spring</option>
+			    <option value="Summer">Summer</option>
+			    <option value="Fall">Fall</option>
+		    </select>
 		    <button type="button" onclick="getSectionsByInstructor()">Query Sections</button>
 	    </form>
 	    <div id="sectionsByInstructorDisplay"></div>
@@ -227,20 +196,14 @@
 
     <div>
 	    <h2>Fetch Sections by Instructor, Degree, and Semester</h2>
-	    <select id="instructorSelect">
-		    <!-- Instructors will be populated here -->
-	    </select>
-	    <select id="degreeSelect">
-		    <!-- Degree names will be populated here -->
-	    </select>
-	    <select id="degreeLevelSelect">
-		    <!-- Degree levels will be populated here -->
-	    </select>
+	    <select id="instructorSelect"></select>
+	    <select id="degreeSelect"></select>
+	    <select id="degreeLevelSelect"></select>
 	    <select id="semesterSelect">
+		    <option value="Winter">Winter</option>
 		    <option value="Spring">Spring</option>
 		    <option value="Summer">Summer</option>
 		    <option value="Fall">Fall</option>
-		    <option value="Winter">Winter</option>
 	    </select>
 	    <input type="number" id="yearInput" placeholder="Year" required>
 	    <button onclick="fetchSections()">Load Sections</button>
@@ -266,6 +229,5 @@
 	    </form>
     </div>
 
-    <button class="scroll-button to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</button>
 </body>
 </html>
