@@ -274,13 +274,12 @@ async def get_instructor_sections(instructor_id: int, degree_name: str, year: in
         if conn.is_connected():
             conn.close()
 
-
 @router.get("/degrees/", response_model=List[DegreeOption])
 async def list_degrees():
     conn = get_db_connection()
     try:
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT name, level FROM degrees")
+        cursor.execute("SELECT DISTINCT name, level FROM degrees")
         degree_rows = cursor.fetchall()
         return [DegreeOption(name=row['name'], level=row['level']) for row in degree_rows]
     finally:
@@ -292,7 +291,7 @@ async def list_instructors():
     conn = get_db_connection()
     try:
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT instructor_id, name FROM instructors")
+        cursor.execute("SELECT DISTINCT instructor_id, name FROM instructors")
         instructor_rows = cursor.fetchall()
         return [InstructorOption(id=row['instructor_id'], name=row['name']) for row in instructor_rows]
     finally:
@@ -304,7 +303,7 @@ async def list_semesters():
     conn = get_db_connection()
     try:
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT CONCAT(year, ' ', semester) AS semester_year FROM semesters ORDER BY year, semester")
+        cursor.execute("SELECT DISTINCT CONCAT(year, ' ', semester) AS semester_year FROM semesters ORDER BY year, semester")
         semester_rows = cursor.fetchall()
         return [SemesterOption(semester_year=row['semester_year']) for row in semester_rows]
     finally:

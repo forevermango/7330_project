@@ -305,22 +305,6 @@ async function submitEvaluation() {
     }
 }
 
-async function fetchSections() {
-    const instructorId = document.getElementById('instructorId_Eval').value;
-    const degreeName = document.getElementById('degreeName_Eval').value;
-    const year = new Date().getFullYear();  // Assuming current year; adjust as necessary
-    const semester = document.getElementById('semester_Eval').value;
-
-    try {
-        const response = await fetch(`http://127.0.0.1:8000/instructor-sections/?instructor_id=${instructorId}&degree_name=${degreeName}&year=${year}&semester=${semester}`);
-        if (!response.ok) throw new Error('Failed to fetch sections');
-        const sections = await response.json();
-        displaySections(sections);  // Implement this function to show sections in the UI
-    } catch (error) {
-        console.error('Failed to load sections:', error);
-    }
-}
-
 window.onload = function() {
     fetchInstructors();
     fetchDegrees();
@@ -344,7 +328,7 @@ async function fetchInstructors() {
 
 async function fetchDegrees() {
     try {
-        const response = await fetch('http://127.0.0.1:8000/degrees/');
+        const response = await fetch('http://localhost:8000/degrees/');
         const data = await response.json();
         const degreeSelect = document.getElementById('degreeSelect');
         const degreeLevelSelect = document.getElementById('degreeLevelSelect');
@@ -353,27 +337,39 @@ async function fetchDegrees() {
         degreeSelect.innerHTML = '';
         degreeLevelSelect.innerHTML = '';
 
-        // To store unique degree levels
-        const degreeLevels = new Set();
+        // To store unique degree names and levels
+        const degrees = {};
 
         data.forEach(degree => {
             // Populate degree names
+            degrees[degree.name] = degrees[degree.name] || [];
+            degrees[degree.name].push(degree.level);
+        });
+
+        // Populate degree select with unique degrees
+        Object.keys(degrees).forEach(name => {
             let option = document.createElement('option');
-            option.value = degree.name;
-            option.textContent = degree.name;
+            option.value = name;
+            option.textContent = name;
             degreeSelect.appendChild(option);
-
-            // Collect degree levels
-            degreeLevels.add(degree.level);
         });
 
-        // Populate degree levels
-        degreeLevels.forEach(level => {
-            let levelOption = document.createElement('option');
-            levelOption.value = level;
-            levelOption.textContent = level;
-            degreeLevelSelect.appendChild(levelOption);
+        // Populate degree level select when a degree is selected
+        degreeSelect.addEventListener('change', function() {
+            const selectedDegree = this.value;
+            degreeLevelSelect.innerHTML = '';
+            degrees[selectedDegree].forEach(level => {
+                let levelOption = document.createElement('option');
+                levelOption.value = level;
+                levelOption.textContent = level;
+                degreeLevelSelect.appendChild(levelOption);
+            });
         });
+
+        // Trigger change event to populate degree level select initially
+        if (degreeSelect.value) {
+            degreeSelect.dispatchEvent(new Event('change'));
+        }
     } catch (error) {
         console.error('Failed to fetch degrees:', error);
     }
@@ -388,15 +384,18 @@ async function fetchSections() {
     const year = document.getElementById('yearInput').value;
 
     try {
-        const url = `http://127.0.0.1:8000/sections-by-instructor-degree-semester/?instructor_id=${instructorId}&degree_name=${degreeName}&degree_level=${degreeLevel}&semester=${semester}&year=${year}`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch sections');
+        const response = await fetch(`http://127.0.0.1:8000/sections-by-instructor-degree-semester/?instructor_id=${instructorId}&degree_name=${degreeName}&degree_level=${degreeLevel}&semester=${semester}&year=${year}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch sections');
+        }
         const sections = await response.json();
         displaySections(sections);
     } catch (error) {
         console.error('Failed to load sections:', error);
+        alert('Failed to load sections. Please try again.');
     }
 }
+
 
 function displaySections(sections) {
     const container = document.getElementById('sectionsContainer');
