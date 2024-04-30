@@ -314,12 +314,14 @@ async function fetchInstructors() {
     try {
         const response = await fetch('http://127.0.0.1:8000/instructors/');
         const data = await response.json();
-        const select = document.getElementById('instructorSelect');
-        data.forEach(instructor => {
-            let option = document.createElement('option');
-            option.value = instructor.id;
-            option.textContent = instructor.name;
-            select.appendChild(option);
+        const selects = document.querySelectorAll('.instructor-select');
+        selects.forEach(select => {
+            data.forEach(instructor => {
+                let option = document.createElement('option');
+                option.value = instructor.id;
+                option.textContent = instructor.name;
+                select.appendChild(option);
+            });
         });
     } catch (error) {
         console.error('Failed to fetch instructors:', error);

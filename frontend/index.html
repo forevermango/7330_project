@@ -48,7 +48,9 @@
 	    <form id="newSectionForm">
 		    <input type="number" id="sectionNumber" placeholder="Section Number" required>
 		    <input type="number" id="numberOfStudents" placeholder="Number of Students" required>
-		    <input type="number" id="sectionInstructorId" placeholder="Instructor ID" required>
+		    <select id="sectionInstructorId" class="instructor-select" required>
+			    <option value="" disabled selected>Select Instructor</option>
+		    </select>
 		    <input type="text" id="sectionCourseNumber" placeholder="Course Number" required>
 		    <select id="sectionSemester" required>
 			    <option value="Winter">Winter</option>
@@ -176,7 +178,10 @@
     <div>
 	    <h2>Query Sections by Instructor and Semester Range</h2>
 	    <form id="querySectionsByInstructorForm">
-		    <input type="number" id="instructorIdQuery" placeholder="Instructor ID" required>
+		    <select id="instructorIdQuery" class="instructor-select" required>
+			    <option value="" disabled selected>Select Instructor</option>
+		    </select>
+
 		    <input type="number" id="instructorStartYearQuery" placeholder="Start Year" required>
 		    <select id="instructorStartSemesterQuery" required>
 			    <option value="Winter">Winter</option>
@@ -198,7 +203,9 @@
 
     <div>
 	    <h2>Fetch Sections by Instructor, Degree, and Semester</h2>
-	    <select id="instructorSelect"></select>
+	    <select id="instructorSelect" class="instructor-select">
+		    <option value="" disabled selected>Select Instructor</option>
+	    </select>
 	    <select id="degreeSelect"></select>
 	    <select id="degreeLevelSelect"></select>
 	    <select id="semesterSelect">
