@@ -9,8 +9,6 @@ class Course(BaseModel):
     name: str
     department_code: constr(min_length=2, max_length=4)
     course_code: int  # Valid range (1000 to 9999)
-    class Config:
-        orm_mode = True
 
 class Instructor(BaseModel):
     instructor_id: int
@@ -119,3 +117,4 @@ class SectionEvaluationStatus(BaseModel):
     semester: str
     instructor_id: int
     evaluation_status: str
+    percent_no_f_grade: Optional[float]

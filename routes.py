@@ -4,7 +4,7 @@ from models import (Degree, Course, Instructor, Section, LearningObjective,
                     SectionDetails, DegreeOption, InstructorOption, Semester, CourseResponse,
                     SectionEvaluation, SectionEvaluationDetail, AssociateCourseWithDegree, SectionEvaluationStatus)
 from database import get_db_connection, add_entity
-from typing import List
+from typing import List, Optional
 
 router = APIRouter()
 
@@ -432,8 +432,9 @@ async def get_evaluation(section_id: int):
     finally:
         conn.close()
 
+
 @router.get("/sections-evaluation-status/", response_model=List[SectionEvaluationStatus])
-async def get_sections_evaluation_status(year: int, semester: str):
+async def get_sections_evaluation_status(year: int, semester: str, f_grade_percentage: Optional[float] = None):
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Failed to connect to the database")
@@ -447,7 +448,11 @@ async def get_sections_evaluation_status(year: int, semester: str):
                         WHEN e.eval_ID IS NOT NULL AND (e.improvements IS NOT NULL AND e.improvements <> '') THEN 'Entered'
                         WHEN e.eval_ID IS NOT NULL THEN 'Partially Entered'
                         ELSE 'Not Entered'
-                   END AS evaluation_status
+                   END AS evaluation_status,
+                   COALESCE(e.eval_A_count, 0) AS eval_A_count,
+                   COALESCE(e.eval_B_count, 0) AS eval_B_count,
+                   COALESCE(e.eval_C_count, 0) AS eval_C_count,
+                   COALESCE(e.eval_F_count, 0) AS eval_F_count
             FROM sections s
             LEFT JOIN course_evaluations e ON s.section_number = e.section_ID
             WHERE s.year = %s AND s.semester = %s
@@ -456,6 +461,10 @@ async def get_sections_evaluation_status(year: int, semester: str):
             cursor.execute(query, (year, semester))
             sections = []
             for row in cursor.fetchall():
+                total_students = row['eval_A_count'] + row['eval_B_count'] + row['eval_C_count'] + row['eval_F_count']
+                if f_grade_percentage is not None and total_students > 0:
+                    if (row['eval_F_count'] / total_students) * 100 > f_grade_percentage:
+                        continue
                 sections.append({
                     'section_number': row['section_number'],
                     'course_number': row['course_number'],
@@ -463,7 +472,8 @@ async def get_sections_evaluation_status(year: int, semester: str):
                     'year': row['year'],
                     'semester': row['semester'],
                     'instructor_id': row['instructor_id'],
-                    'evaluation_status': row['evaluation_status']
+                    'evaluation_status': row['evaluation_status'],
+                    'percent_no_f_grade': ((total_students - row['eval_F_count']) / total_students) * 100 if total_students > 0 else 0
                 })
             return sections
     finally:

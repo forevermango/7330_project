@@ -563,9 +563,10 @@ document.addEventListener("DOMContentLoaded", fetchLearningObjectives);
 async function querySectionEvaluationStatus() {
     const year = document.getElementById('queryYear').value;
     const semester = document.getElementById('querySemester').value;
+    const percentage = document.getElementById('queryPercentage').value;
 
     try {
-        const response = await fetch(`http://localhost:8000/sections-evaluation-status/?year=${year}&semester=${semester}`);
+        const response = await fetch(`http://localhost:8000/sections-evaluation-status/?year=${year}&semester=${semester}&f_grade_percentage=${percentage}`);
         if (!response.ok) {
             throw new Error('Failed to fetch section evaluation status');
         }
@@ -577,12 +578,17 @@ async function querySectionEvaluationStatus() {
     }
 }
 
+
 function displaySectionEvaluationStatus(sections) {
     const displayContainer = document.getElementById('sectionEvaluationStatusDisplay');
     displayContainer.innerHTML = sections.map(section => {
+        let percentNoFGrade = '';
+        if (section.percent_no_f_grade !== null) {
+            percentNoFGrade = ` (${section.percent_no_f_grade.toFixed(2)}% not receiving F)`;
+        }
         return `
             <div>
-                Section ${section.section_number} (${section.course_number}): ${section.evaluation_status}
+                Section ${section.section_number} (${section.course_number}): ${section.evaluation_status}${percentNoFGrade}
             </div>
         `;
     }).join('');
