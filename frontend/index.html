@@ -289,7 +289,22 @@
 	    </form>
     </div>
 
+    <div>
+	    <h2>Query Section Evaluation Status</h2>
+	    <form id="querySectionEvaluationForm">
+		    <input type="number" id="queryYear" placeholder="Year" required>
+		    <select id="querySemester" required>
+			    <option value="Winter">Winter</option>
+			    <option value="Spring">Spring</option>
+			    <option value="Summer">Summer</option>
+			    <option value="Fall">Fall</option>
+		    </select>
+		    <button type="button" onclick="querySectionEvaluationStatus()">Query Status</button>
+	    </form>
+	    <div id="sectionEvaluationStatusDisplay"></div>
+    </div>
 
+    
     <button class="scroll-button to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</button>
 </body>
 </html>

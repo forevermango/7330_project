@@ -558,5 +558,31 @@ async function fetchLearningObjectives() {
 
 document.addEventListener("DOMContentLoaded", fetchLearningObjectives);
 
+async function querySectionEvaluationStatus() {
+    const year = document.getElementById('queryYear').value;
+    const semester = document.getElementById('querySemester').value;
 
+    try {
+        const response = await fetch(`http://localhost:8000/sections-evaluation-status/?year=${year}&semester=${semester}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch section evaluation status');
+        }
+        const data = await response.json();
+        displaySectionEvaluationStatus(data);
+    } catch (error) {
+        console.error('Failed to load section evaluation status:', error);
+        alert('Failed to load section evaluation status. Please try again.');
+    }
+}
+
+function displaySectionEvaluationStatus(sections) {
+    const displayContainer = document.getElementById('sectionEvaluationStatusDisplay');
+    displayContainer.innerHTML = sections.map(section => {
+        return `
+            <div>
+                Section ${section.section_number} (${section.course_number}): ${section.evaluation_status}
+            </div>
+        `;
+    }).join('');
+}
 
