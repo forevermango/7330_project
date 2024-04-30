@@ -402,19 +402,14 @@ async function fetchSections() {
 function displaySections(sections) {
     const container = document.getElementById('sectionsContainer');
     container.innerHTML = sections.map(section => {
-        // Check if there's an existing evaluation by checking if any key evaluation data is not null
-        const hasEvaluation = section.eval_ID !== null;  // or another significant field that indicates evaluation existence
         return `
             <div>
-                Section ${section.section_number}: ${section.course_name || 'Course name missing'} (${section.course_number}) - 
-                ${hasEvaluation ? 'Evaluation entered' : 'No evaluation yet'}
-                <button onclick="showEvaluationForm(${section.section_number}, ${hasEvaluation})">
-                    ${hasEvaluation ? 'Update Evaluation' : 'Add Evaluation'}
-                </button>
+                Section ${section.section_number}: ${section.course_name || 'Course name missing'} (${section.course_number})
             </div>
         `;
     }).join('');
 }
+
 
 function showEvaluationForm(sectionNumber, hasEvaluation) {
     const formContainer = document.getElementById('evaluationFormContainer');
