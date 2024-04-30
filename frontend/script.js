@@ -564,9 +564,13 @@ async function querySectionEvaluationStatus() {
     const year = document.getElementById('queryYear').value;
     const semester = document.getElementById('querySemester').value;
     const percentage = document.getElementById('queryPercentage').value;
+    let url = `http://localhost:8000/sections-evaluation-status/?year=${year}&semester=${semester}`;
+    if (percentage) {
+        url += `&f_grade_percentage=${percentage}`;
+    }
 
     try {
-        const response = await fetch(`http://localhost:8000/sections-evaluation-status/?year=${year}&semester=${semester}&f_grade_percentage=${percentage}`);
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error('Failed to fetch section evaluation status');
         }
@@ -577,6 +581,7 @@ async function querySectionEvaluationStatus() {
         alert('Failed to load section evaluation status. Please try again.');
     }
 }
+
 
 
 function displaySectionEvaluationStatus(sections) {
