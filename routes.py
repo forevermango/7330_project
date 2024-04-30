@@ -444,7 +444,7 @@ async def get_sections_evaluation_status(year: int, semester: str):
             SELECT s.section_number, s.course_number, s.number_of_students, s.year, s.semester,
                    s.instructor_id, 
                    CASE
-                        WHEN e.eval_ID IS NOT NULL AND e.improvements IS NOT NULL THEN 'Entered'
+                        WHEN e.eval_ID IS NOT NULL AND (e.improvements IS NOT NULL AND e.improvements <> '') THEN 'Entered'
                         WHEN e.eval_ID IS NOT NULL THEN 'Partially Entered'
                         ELSE 'Not Entered'
                    END AS evaluation_status
