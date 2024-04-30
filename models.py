@@ -111,3 +111,11 @@ class AssociateCourseWithDegree(BaseModel):
     course_number: str
     core_course: bool
 
+class SectionEvaluationStatus(BaseModel):
+    section_number: int
+    course_number: str
+    number_of_students: int
+    year: int
+    semester: str
+    instructor_id: int
+    evaluation_status: str

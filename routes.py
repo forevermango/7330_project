@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from models import (Degree, Course, Instructor, Section, LearningObjective, 
                     CourseObjectiveAssociation, CourseSectionAssociation, EvaluationData, 
                     SectionDetails, DegreeOption, InstructorOption, Semester, CourseResponse,
-                    SectionEvaluation, SectionEvaluationDetail, AssociateCourseWithDegree)
+                    SectionEvaluation, SectionEvaluationDetail, AssociateCourseWithDegree, SectionEvaluationStatus)
 from database import get_db_connection, add_entity
 from typing import List
 
@@ -431,4 +431,42 @@ async def get_evaluation(section_id: int):
             raise HTTPException(status_code=404, detail="Evaluation not found")
     finally:
         conn.close()
+
+@router.get("/sections-evaluation-status/", response_model=List[SectionEvaluationStatus])
+async def get_sections_evaluation_status(year: int, semester: str):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Failed to connect to the database")
+    
+    try:
+        with conn.cursor(dictionary=True) as cursor:
+            query = """
+            SELECT s.section_number, s.course_number, s.number_of_students, s.year, s.semester,
+                   s.instructor_id, 
+                   CASE
+                        WHEN e.eval_ID IS NOT NULL AND e.improvements IS NOT NULL THEN 'Entered'
+                        WHEN e.eval_ID IS NOT NULL THEN 'Partially Entered'
+                        ELSE 'Not Entered'
+                   END AS evaluation_status
+            FROM sections s
+            LEFT JOIN course_evaluations e ON s.section_number = e.section_ID
+            WHERE s.year = %s AND s.semester = %s
+            ORDER BY s.section_number;
+            """
+            cursor.execute(query, (year, semester))
+            sections = []
+            for row in cursor.fetchall():
+                sections.append({
+                    'section_number': row['section_number'],
+                    'course_number': row['course_number'],
+                    'number_of_students': row['number_of_students'],
+                    'year': row['year'],
+                    'semester': row['semester'],
+                    'instructor_id': row['instructor_id'],
+                    'evaluation_status': row['evaluation_status']
+                })
+            return sections
+    finally:
+        if conn.is_connected():
+            conn.close()
 
