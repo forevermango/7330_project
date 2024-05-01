@@ -386,7 +386,7 @@ async function fetchSections() {
     const year = document.getElementById('yearInput').value;
 
     try {
-        const response = await fetch(`http://127.0.0.1:8000/sections-by-instructor-degree-semester/?instructor_id=${instructorId}&degree_name=${degreeName}&degree_level=${degreeLevel}&semester=${semester}&year=${year}`);
+        const response = await fetch(`http://127.0.0.1:8000/sections-evaluation-status/?year=${year}&semester=${semester}`);
         if (!response.ok) {
             throw new Error('Failed to fetch sections');
         }
@@ -398,18 +398,20 @@ async function fetchSections() {
     }
 }
 
-
 function displaySections(sections) {
     const container = document.getElementById('sectionsContainer');
     container.innerHTML = sections.map(section => {
         return `
             <div>
-                Section ${section.section_number}: ${section.course_name || 'Course name missing'} (${section.course_number})
+                Section ${section.section_number}: ${section.course_name || 'Course name missing'} (${section.course_number}) - 
+                ${section.evaluation_status}
+                <button onclick="showEvaluationForm(${section.section_number}, ${section.evaluation_status === 'Partially Entered' || section.evaluation_status === 'Entered'})">
+                    ${section.evaluation_status === 'Partially Entered' || section.evaluation_status === 'Entered' ? 'Update Evaluation' : 'Add Evaluation'}
+                </button>
             </div>
         `;
     }).join('');
 }
-
 
 function showEvaluationForm(sectionNumber, hasEvaluation) {
     const formContainer = document.getElementById('evaluationFormContainer');
